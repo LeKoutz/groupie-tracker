@@ -1,0 +1,47 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Groupie Tracker: Artists</title> 
+    
+    <link rel="stylesheet" href="/static/css/style.css"> 
+</head>
+<body>
+
+    <header>
+        <h1>Groupie Tracker</h1>
+        <nav>
+            <a href="/">Home</a> 
+        </nav>
+    </header>
+
+    <main>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search artists, dates, or locations...">
+            <button id="searchButton">Search</button>
+        </div>
+
+        <div id="artist-list" class="artist-grid">
+            
+            <div class="artist-card">
+                <img src="/static/images/placeholder.jpg" alt="Band Image Placeholder">
+                
+                <h3>Band Name Placeholder</h3>
+                <hr> 
+                <p><strong>Formed:</strong> 2008</p>
+                <p><strong>First Album:</strong> 2010</p>
+                
+                <a href="/artist/1" class="details-button">View Tour Details</a>
+            </div>
+            
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; Groupie Tracker Project</p>
+    </footer>
+
+    <script src="/static/js/app.js"></script> 
+</body>
+</html>
