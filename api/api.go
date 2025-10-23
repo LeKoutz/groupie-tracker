@@ -7,10 +7,11 @@ import (
 	"net/http"
 )
 
-func FetchArtists() ([]models.Artist, error) {
-	resp, err := http.Get("https://groupietrackers.herokuapp.com/api/artists")
+
+func FetchArtistsByURL(url string) ([]models.Artist, error) {
+	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch artists from API with error: %v", err)
+		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", url, err)
 	}
 	defer resp.Body.Close()
 
@@ -28,12 +29,12 @@ func FetchArtists() ([]models.Artist, error) {
 func FetchLocationsByURL(url string) ([]models.Locations, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch locations from API with error: %v", err)
+		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", url, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API Unexpected stuats: %d", resp.StatusCode)
+		return nil, fmt.Errorf("API Unexpected status: %d", resp.StatusCode)
 	}
 
 	var concert_locations models.LocationsIndex
@@ -46,7 +47,7 @@ func FetchLocationsByURL(url string) ([]models.Locations, error) {
 func FetchDatesByURL(url string) ([]models.Dates, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch Dates from API with error: %v", err)
+		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", url, err)
 	}
 	defer resp.Body.Close()
 
@@ -63,7 +64,7 @@ func FetchDatesByURL(url string) ([]models.Dates, error) {
 func FetchRelationsByURL(url string) ([]models.Relation, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch Relations from API with error: %v", err)
+		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", url, err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
