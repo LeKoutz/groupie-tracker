@@ -86,6 +86,19 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func ResourcesHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "This request method is not supported for the requested resource. Use GET request instead.")
+		return
+	}
+	if strings.HasSuffix(r.URL.Path, "/") {
+		HandleErrors(w, http.StatusNotFound, http.StatusText(http.StatusNotFound), "Please check the resource URL and try again.")
+		return
+	}
+	filePath := strings.TrimPrefix(r.URL.Path, "/static")
+	http.ServeFile(w, r, filepath.Join("static", filePath))
+}
+
 // HandleErrors renders an error page with the given status code, error message, and response.
 func HandleErrors(w http.ResponseWriter, statusCode int, message, response string) {
 	errorData := struct {
