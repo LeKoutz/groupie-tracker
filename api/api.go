@@ -11,8 +11,41 @@ const (
 	ARTISTS_API		= "https://groupietrackers.herokuapp.com/api/artists"
 	LOCATIONS_API	= "https://groupietrackers.herokuapp.com/api/locations"
 	DATES_API		= "https://groupietrackers.herokuapp.com/api/dates"
-	RELATIONS_API	= "https://groupietrackers.herokuapp.com/api/relations"
+	RELATIONS_API	= "https://groupietrackers.herokuapp.com/api/relation"
 )
+
+var (
+	All_Artists		[]models.Artists
+	All_Locations	[]models.Locations
+	All_Dates		[]models.Dates
+	All_Relations	[]models.Relations
+)
+
+func InitializeData() []error {
+	var errors []error
+	var err error
+	All_Artists, err = FetchArtists()
+	if err != nil {
+		errors = append(errors, fmt.Errorf("FetchArtists: %v", err))
+	}
+	All_Locations, err = FetchLocations()
+	if err != nil {
+		errors = append(errors, fmt.Errorf("FetchLocations: %v", err))
+	}
+	All_Dates, err = FetchDates()
+	if err != nil {
+		errors = append(errors, fmt.Errorf("FetchDates: %v", err))
+	}
+	All_Relations, err = FetchRelations()
+	if err != nil {
+		errors = append(errors, fmt.Errorf("FetchRelations: %v", err))
+	}
+	if len(errors) > 0 {
+		return errors
+	} else {
+		return nil
+	}
+}
 
 func FetchArtists() ([]models.Artists, error) {
 	resp, err := http.Get(ARTISTS_API)
