@@ -7,11 +7,17 @@ import (
 	"net/http"
 )
 
+const (
+	ARTISTS_API		= "https://groupietrackers.herokuapp.com/api/artists"
+	LOCATIONS_API	= "https://groupietrackers.herokuapp.com/api/locations"
+	DATES_API		= "https://groupietrackers.herokuapp.com/api/dates"
+	RELATIONS_API	= "https://groupietrackers.herokuapp.com/api/relations"
+)
 
-func FetchArtistsByURL(url string) ([]models.Artist, error) {
-	resp, err := http.Get(url)
+func FetchArtists() ([]models.Artists, error) {
+	resp, err := http.Get(ARTISTS_API)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", url, err)
+		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", ARTISTS_API, err)
 	}
 	defer resp.Body.Close()
 
@@ -19,17 +25,17 @@ func FetchArtistsByURL(url string) ([]models.Artist, error) {
 		return nil, fmt.Errorf("API Unexpected status: %d", resp.StatusCode)
 	}
 
-	var artists []models.Artist
+	var artists []models.Artists
 	if err := json.NewDecoder(resp.Body).Decode(&artists); err != nil {
 		return nil, fmt.Errorf("JSON decode failed: %v", err)
 	}
 	return artists, nil
 }
 
-func FetchLocationsByURL(url string) ([]models.Locations, error) {
-	resp, err := http.Get(url)
+func FetchLocations() ([]models.Locations, error) {
+	resp, err := http.Get(LOCATIONS_API)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", url, err)
+		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", LOCATIONS_API, err)
 	}
 	defer resp.Body.Close()
 
@@ -44,10 +50,10 @@ func FetchLocationsByURL(url string) ([]models.Locations, error) {
 	return concert_locations.Index, nil
 }
 
-func FetchDatesByURL(url string) ([]models.Dates, error) {
-	resp, err := http.Get(url)
+func FetchDates() ([]models.Dates, error) {
+	resp, err := http.Get(DATES_API)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", url, err)
+		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", DATES_API, err)
 	}
 	defer resp.Body.Close()
 
@@ -61,17 +67,16 @@ func FetchDatesByURL(url string) ([]models.Dates, error) {
 	return concert_dates.Index, nil
 }
 
-func FetchRelationsByURL(url string) ([]models.Relation, error) {
-	resp, err := http.Get(url)
+func FetchRelations() ([]models.Relations, error) {
+	resp, err := http.Get(RELATIONS_API)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", url, err)
+		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", RELATIONS_API, err)
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API Unexpected status: %d", resp.StatusCode)
 	}
-	defer resp.Body.Close()
-
 	var relations models.RelationIndex
 	if err := json.NewDecoder(resp.Body).Decode(&relations); err != nil {
 		return nil, fmt.Errorf("JSON decode failed: %v", err)
