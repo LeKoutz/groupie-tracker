@@ -76,15 +76,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // NOTE: The structure here must exactly match the HTML you designed!
             const cardHTML = `
                 <div class="artist-card">
-                    <img src="${artist.Image}" alt="${artist.Name} Image">
-                    
-                    <h3>${artist.Name}</h3>
-                    <hr>
-                    <p><strong>Formed:</strong> ${artist.CreationDate}</p>
-                    <p><strong>First Album:</strong> ${artist.FirstAlbum}</p>
-                    
-                    <a href="/artist/${artist.ID}" class="details-button">View Tour Details</a>
-                </div>
+        <img src="${artist.image}" alt="${artist.name} Image">
+        
+        <h3>${artist.name}</h3>
+        <hr>
+        <p><strong>Formed:</strong> ${artist.creationDate}</p>
+        <p><strong>First Album:</strong> ${artist.firstAlbum}</p>
+        
+        <a href="/artist/${artist.id}" class="details-button">View Tour Details</a>
+    </div>
             `;
             // 4. Add the new card's HTML code to the main container
             artistListContainer.innerHTML += cardHTML;
