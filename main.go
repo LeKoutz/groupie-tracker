@@ -5,6 +5,7 @@ import (
 	"groupie-tracker/handlers"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main () {
@@ -20,7 +21,12 @@ func main () {
 	http.HandleFunc("/static/", handlers.ResourcesHandler)
 
 	// Start the server
-	log.Println("Server starting on: http://localhost:8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	addr := ":" + port
+	log.Println("Server starting on: http://localhost:" + port)
 	log.Println("Press CTRL+C to stop the server")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
