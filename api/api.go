@@ -10,20 +10,20 @@ import (
 	"time"
 )
 
-const (
-	ARTISTS_API		= "https://groupietrackers.herokuapp.com/api/artists"
-	LOCATIONS_API	= "https://groupietrackers.herokuapp.com/api/locations"
-	DATES_API		= "https://groupietrackers.herokuapp.com/api/dates"
-	RELATIONS_API	= "https://groupietrackers.herokuapp.com/api/relation"
+var (
+	ARTISTS_API   = "https://groupietrackers.herokuapp.com/api/artists"
+	LOCATIONS_API = "https://groupietrackers.herokuapp.com/api/locations"
+	DATES_API     = "https://groupietrackers.herokuapp.com/api/dates"
+	RELATIONS_API = "https://groupietrackers.herokuapp.com/api/relation"
 )
 
 var (
-	All_Artists		[]models.Artists
-	All_Locations	[]models.Locations
-	All_Dates		[]models.Dates
-	All_Relations	[]models.Relations
-	Status			LoadingStatus
-	statusMutex		sync.RWMutex
+	All_Artists   []models.Artists
+	All_Locations []models.Locations
+	All_Dates     []models.Dates
+	All_Relations []models.Relations
+	Status        LoadingStatus
+	statusMutex   sync.RWMutex
 )
 
 type LoadingStatus struct {
@@ -257,30 +257,30 @@ func RefreshData() {
 	for {
 		if GetLoadingStatus().IsLoading {
 			continue
-	} else if GetLoadingStatus().IsLoaded {
-		time.Sleep(24 * time.Hour)
-		fmt.Println("Refreshing data...")
-		SetLoadingStatus(true, false, false)
-		err := InitializeData()
-		if err != nil {
-			SetLoadingStatus(false, false, true)
-			continue
-		} else {
-			SetLoadingStatus(false, true, false)
-			continue
+		} else if GetLoadingStatus().IsLoaded {
+			time.Sleep(24 * time.Hour)
+			fmt.Println("Refreshing data...")
+			SetLoadingStatus(true, false, false)
+			err := InitializeData()
+			if err != nil {
+				SetLoadingStatus(false, false, true)
+				continue
+			} else {
+				SetLoadingStatus(false, true, false)
+				continue
+			}
+		} else if GetLoadingStatus().HasFailed {
+			time.Sleep(1 * time.Second)
+			fmt.Println("Refreshing data...")
+			SetLoadingStatus(true, false, false)
+			err := InitializeData()
+			if err != nil {
+				SetLoadingStatus(false, false, true)
+				continue
+			} else {
+				SetLoadingStatus(false, true, false)
+				continue
+			}
 		}
-	} else if GetLoadingStatus().HasFailed {
-		time.Sleep(1 * time.Second)
-		fmt.Println("Refreshing data...")
-		SetLoadingStatus(true, false, false)
-		err := InitializeData()
-		if err != nil {
-			SetLoadingStatus(false, false, true)
-			continue
-		} else {
-			SetLoadingStatus(false, true, false)
-			continue
-		}
-	}
 	}
 }
