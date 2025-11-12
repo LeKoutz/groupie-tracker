@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"groupie-tracker/models"
 	"net/http"
+	"time"
 )
 
 const (
@@ -21,34 +23,125 @@ var (
 	All_Relations	[]models.Relations
 )
 
+// InitializeData fetches data from all APIs asynchronously.
+// If a fetch fails, it retries up to 2 times.
+// Each API fetch times out after 5 seconds returning an error.
 func InitializeData() []error {
 	var errors []error
-	var err error
-	All_Artists, err = FetchArtists()
-	if err != nil {
-		errors = append(errors, fmt.Errorf("FetchArtists: %v", err))
+	maxRetries := 2
+	ch := make(chan error, 4)
+	// Fetch Artists
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		var err error
+		for attempt := 0; attempt <= maxRetries; attempt++ {
+			if ctx.Err() != nil {
+				ch <- fmt.Errorf("FetchArtists timed out on attempt %d\n", attempt)
+				return
+			}
+			artists, err := FetchArtistsWithContext(ctx)
+			if err == nil {
+				All_Artists = artists
+				ch <- nil
+				return
+			}
+			fmt.Printf("FetchArtists attempt %d failed: %v\n", attempt, err)
+			if attempt < maxRetries {
+				time.Sleep(1 * time.Second)
+			}
+		}
+		ch <- fmt.Errorf("FetchArtists failed after %d attempts: %v", maxRetries+1, err)
+	}()
+	// Fetch Locations
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		var err error
+		for attempt := 0; attempt <= maxRetries; attempt++ {
+			if ctx.Err() != nil {
+				ch <- fmt.Errorf("FetchLocations timed out on attempt %d\n", attempt)
+				return
+			}
+			locations, err := FetchLocationsWithContext(ctx)
+			if err == nil {
+				All_Locations = locations
+				ch <- nil
+				return
+			}
+			fmt.Printf("FetchLocations attempt %d failed: %v\n", attempt, err)
+			if attempt < maxRetries {
+				time.Sleep(1 * time.Second)
+			}
+		}
+		ch <- fmt.Errorf("FetchLocations failed after %d attempts: %v", maxRetries+1, err)
+	}()
+	// Fetch Dates
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		var err error
+		for attempt := 0; attempt <= maxRetries; attempt++ {
+			if ctx.Err() != nil {
+				ch <- fmt.Errorf("FetchDates timed out on attempt %d\n", attempt)
+				return
+			}
+			dates, err := FetchDatesWithContext(ctx)
+			if err == nil {
+				All_Dates = dates
+				ch <- nil
+				return
+			}
+			fmt.Printf("FetchDates attempt %d failed: %v\n", attempt, err)
+			if attempt < maxRetries {
+				time.Sleep(1 * time.Second)
+			}
+		}
+		ch <- fmt.Errorf("FetchDates failed after %d attempts: %v", maxRetries+1, err)
+	}()
+	// Fetch Relations
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		var err error
+		for attempt := 0; attempt <= maxRetries; attempt++ {
+			if ctx.Err() != nil {
+				ch <- fmt.Errorf("FetchRelations timed out on attempt %d\n", attempt)
+				return
+			}
+			relations, err := FetchRelationsWithContext(ctx)
+			if err == nil {
+				All_Relations = relations
+				ch <- nil
+				return
+			}
+			fmt.Printf("FetchRelations attempt %d failed: %v\n", attempt, err)
+			if attempt < maxRetries {
+				time.Sleep(1 * time.Second)
+			}
+		}
+		ch <- fmt.Errorf("FetchRelations failed after %d attempts: %v", maxRetries+1, err)
+	}()
+	// Collect results
+	for i := 0; i < 4; i++ {
+		if err := <-ch; err != nil {
+			errors = append(errors, err)
+		}
 	}
-	All_Locations, err = FetchLocations()
-	if err != nil {
-		errors = append(errors, fmt.Errorf("FetchLocations: %v", err))
-	}
-	All_Dates, err = FetchDates()
-	if err != nil {
-		errors = append(errors, fmt.Errorf("FetchDates: %v", err))
-	}
-	All_Relations, err = FetchRelations()
-	if err != nil {
-		errors = append(errors, fmt.Errorf("FetchRelations: %v", err))
-	}
+	close(ch)
 	if len(errors) > 0 {
 		return errors
-	} else {
-		return nil
 	}
+	return nil
 }
 
-func FetchArtists() ([]models.Artists, error) {
-	resp, err := http.Get(ARTISTS_API)
+func FetchArtistsWithContext(ctx context.Context) ([]models.Artists, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ARTISTS_API, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create request: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", ARTISTS_API, err)
 	}
@@ -65,8 +158,13 @@ func FetchArtists() ([]models.Artists, error) {
 	return artists, nil
 }
 
-func FetchLocations() ([]models.Locations, error) {
-	resp, err := http.Get(LOCATIONS_API)
+func FetchLocationsWithContext(ctx context.Context) ([]models.Locations, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, LOCATIONS_API, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create request: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", LOCATIONS_API, err)
 	}
@@ -83,8 +181,13 @@ func FetchLocations() ([]models.Locations, error) {
 	return concert_locations.Index, nil
 }
 
-func FetchDates() ([]models.Dates, error) {
-	resp, err := http.Get(DATES_API)
+func FetchDatesWithContext(ctx context.Context) ([]models.Dates, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, DATES_API, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create request: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", DATES_API, err)
 	}
@@ -100,8 +203,13 @@ func FetchDates() ([]models.Dates, error) {
 	return concert_dates.Index, nil
 }
 
-func FetchRelations() ([]models.Relations, error) {
-	resp, err := http.Get(RELATIONS_API)
+func FetchRelationsWithContext(ctx context.Context) ([]models.Relations, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, RELATIONS_API, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create request: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from %s with error: %v", RELATIONS_API, err)
 	}
