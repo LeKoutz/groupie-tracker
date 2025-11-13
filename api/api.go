@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"groupie-tracker/models"
 	"net/http"
 	"sync"
 	"time"
+
+	"groupie-tracker/models"
 )
 
 var (
