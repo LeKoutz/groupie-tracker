@@ -8,6 +8,9 @@ import (
 	"testing"
 )
 
+/*
+TestFetchArtists verifies that FetchArtistsWithContext succeeds and returns a non-empty list of artists.
+*/
 func TestFetchArtists(t *testing.T) {
 	artists, err := FetchArtistsWithContext(context.Background())
 	if err != nil {
@@ -18,6 +21,9 @@ func TestFetchArtists(t *testing.T) {
 	}
 }
 
+/*
+TestFetchLocations verifies that FetchLocationsWithContext succeeds and returns a non-empty list of locations.
+*/
 func TestFetchLocations(t *testing.T) {
 	locations, err := FetchLocationsWithContext(context.Background())
 	if err != nil {
@@ -28,6 +34,9 @@ func TestFetchLocations(t *testing.T) {
 	}
 }
 
+/*
+TestFetchDates verifies that FetchDatesWithContext succeeds and returns a non-empty list of dates.
+*/
 func TestFetchDates(t *testing.T) {
 	dates, err := FetchDatesWithContext(context.Background())
 	if err != nil {
@@ -38,6 +47,9 @@ func TestFetchDates(t *testing.T) {
 	}
 }
 
+/*
+TestFetchRelations verifies that FetchRelationsWithContext succeeds and returns a non-empty list of relations.
+*/
 func TestFetchRelations(t *testing.T) {
 	relations, err := FetchRelationsWithContext(context.Background())
 	if err != nil {
@@ -48,6 +60,9 @@ func TestFetchRelations(t *testing.T) {
 	}
 }
 
+/*
+TestFetchArtists_DataValidation checks that fetched artist data has valid fields: positive ID, non-empty name, members, creation date, first album, locations, concert dates, and relations.
+*/
 func TestFetchArtists_DataValidation(t *testing.T) {
 	artists, err := FetchArtistsWithContext(context.Background())
 	if err != nil {
@@ -82,6 +97,9 @@ func TestFetchArtists_DataValidation(t *testing.T) {
 }
 
 // Test error scenarios with mocked servers
+/*
+TestFetchArtists_NetworkError simulates a network error by setting an invalid URL and verifies that FetchArtistsWithContext returns an error and nil artists.
+*/
 func TestFetchArtists_NetworkError(t *testing.T) {
 	// Save original URL and restore after test
 	originalURL := ARTISTS_API
@@ -99,6 +117,9 @@ func TestFetchArtists_NetworkError(t *testing.T) {
 	}
 }
 
+/*
+TestFetchArtists_StatusCodeError uses a mock server returning a 500 status code to verify that FetchArtistsWithContext returns an error and nil artists.
+*/
 func TestFetchArtists_StatusCodeError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -118,6 +139,9 @@ func TestFetchArtists_StatusCodeError(t *testing.T) {
 	}
 }
 
+/*
+TestFetchArtists_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchArtistsWithContext returns a decode error and nil artists.
+*/
 func TestFetchArtists_JSONDecodeError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -138,6 +162,9 @@ func TestFetchArtists_JSONDecodeError(t *testing.T) {
 	}
 }
 
+/*
+TestFetchLocations_StatusCodeError uses a mock server returning a 404 status code to verify that FetchLocationsWithContext returns an error and nil locations.
+*/
 func TestFetchLocations_StatusCodeError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -157,6 +184,9 @@ func TestFetchLocations_StatusCodeError(t *testing.T) {
 	}
 }
 
+/*
+TestFetchLocations_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchLocationsWithContext returns a decode error and nil locations.
+*/
 func TestFetchLocations_JSONDecodeError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -177,8 +207,11 @@ func TestFetchLocations_JSONDecodeError(t *testing.T) {
 	}
 }
 
-func TestInitializeData_AllSuccess(t *testing.T) {
-	// Save original URLs and global variables
+/*
+TestInitializeData_AllSuccess tests that InitializeData successfully loads all data (artists, locations, dates, relations) when all APIs are working.
+*/
+func setupInitializeDataTest() (func(), func()) {
+	// Save original state
 	originalArtists := All_Artists
 	originalLocations := All_Locations
 	originalDates := All_Dates
@@ -188,7 +221,19 @@ func TestInitializeData_AllSuccess(t *testing.T) {
 	originalDatesURL := DATES_API
 	originalRelationsURL := RELATIONS_API
 
-	defer func() {
+	/*
+		reset: A function you call manually to set globals to nil
+		restore: A function you defer to run at the end
+	*/
+
+	reset := func() {
+		All_Artists = nil
+		All_Locations = nil
+		All_Dates = nil
+		All_Relations = nil
+	}
+
+	restore := func() {
 		All_Artists = originalArtists
 		All_Locations = originalLocations
 		All_Dates = originalDates
@@ -197,13 +242,15 @@ func TestInitializeData_AllSuccess(t *testing.T) {
 		LOCATIONS_API = originalLocationsURL
 		DATES_API = originalDatesURL
 		RELATIONS_API = originalRelationsURL
-	}()
+	}
 
-	// Reset global variables
-	All_Artists = nil
-	All_Locations = nil
-	All_Dates = nil
-	All_Relations = nil
+	return reset, restore
+}
+
+func TestInitializeData_AllSuccess(t *testing.T) {
+	reset, restore := setupInitializeDataTest()
+	defer restore()
+	reset()
 
 	// Use real APIs for this test (they should work)
 	errors := InitializeData()
@@ -225,33 +272,13 @@ func TestInitializeData_AllSuccess(t *testing.T) {
 	}
 }
 
+/*
+TestInitializeData_PartialFailure tests that InitializeData handles partial failures: when one API fails, it still loads data from the others and returns errors for the failed one.
+*/
 func TestInitializeData_PartialFailure(t *testing.T) {
-	// Save original URLs and global variables
-	originalArtists := All_Artists
-	originalLocations := All_Locations
-	originalDates := All_Dates
-	originalRelations := All_Relations
-	originalArtistsURL := ARTISTS_API
-	originalLocationsURL := LOCATIONS_API
-	originalDatesURL := DATES_API
-	originalRelationsURL := RELATIONS_API
-
-	defer func() {
-		All_Artists = originalArtists
-		All_Locations = originalLocations
-		All_Dates = originalDates
-		All_Relations = originalRelations
-		ARTISTS_API = originalArtistsURL
-		LOCATIONS_API = originalLocationsURL
-		DATES_API = originalDatesURL
-		RELATIONS_API = originalRelationsURL
-	}()
-
-	// Reset global variables
-	All_Artists = nil
-	All_Locations = nil
-	All_Dates = nil
-	All_Relations = nil
+	reset, restore := setupInitializeDataTest()
+	defer restore()
+	reset()
 
 	// Set one API to fail
 	ARTISTS_API = "http://invalid.url"
@@ -279,33 +306,13 @@ func TestInitializeData_PartialFailure(t *testing.T) {
 	}
 }
 
+/*
+TestInitializeData_AllFailure tests that InitializeData returns errors for all failed APIs and leaves global variables empty when all APIs fail.
+*/
 func TestInitializeData_AllFailure(t *testing.T) {
-	// Save original URLs and global variables
-	originalArtists := All_Artists
-	originalLocations := All_Locations
-	originalDates := All_Dates
-	originalRelations := All_Relations
-	originalArtistsURL := ARTISTS_API
-	originalLocationsURL := LOCATIONS_API
-	originalDatesURL := DATES_API
-	originalRelationsURL := RELATIONS_API
-
-	defer func() {
-		All_Artists = originalArtists
-		All_Locations = originalLocations
-		All_Dates = originalDates
-		All_Relations = originalRelations
-		ARTISTS_API = originalArtistsURL
-		LOCATIONS_API = originalLocationsURL
-		DATES_API = originalDatesURL
-		RELATIONS_API = originalRelationsURL
-	}()
-
-	// Reset global variables
-	All_Artists = nil
-	All_Locations = nil
-	All_Dates = nil
-	All_Relations = nil
+	reset, restore := setupInitializeDataTest()
+	defer restore()
+	reset()
 
 	// Set all APIs to fail
 	ARTISTS_API = "http://invalid.url"
@@ -336,6 +343,9 @@ func TestInitializeData_AllFailure(t *testing.T) {
 	}
 }
 
+/*
+TestFetchDates_StatusCodeError uses a mock server returning a 400 status code to verify that FetchDatesWithContext returns an error and nil dates.
+*/
 func TestFetchDates_StatusCodeError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
@@ -355,6 +365,9 @@ func TestFetchDates_StatusCodeError(t *testing.T) {
 	}
 }
 
+/*
+TestFetchDates_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchDatesWithContext returns a decode error and nil dates.
+*/
 func TestFetchDates_JSONDecodeError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -375,6 +388,9 @@ func TestFetchDates_JSONDecodeError(t *testing.T) {
 	}
 }
 
+/*
+TestFetchRelations_StatusCodeError uses a mock server returning a 403 status code to verify that FetchRelationsWithContext returns an error and nil relations.
+*/
 func TestFetchRelations_StatusCodeError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
@@ -394,6 +410,9 @@ func TestFetchRelations_StatusCodeError(t *testing.T) {
 	}
 }
 
+/*
+TestFetchRelations_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchRelationsWithContext returns a decode error and nil relations.
+*/
 func TestFetchRelations_JSONDecodeError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -414,6 +433,9 @@ func TestFetchRelations_JSONDecodeError(t *testing.T) {
 	}
 }
 
+/*
+TestFetchLocations_DataValidation checks that fetched location data has valid fields: positive ID, non-empty locations list, and non-empty dates string.
+*/
 func TestFetchLocations_DataValidation(t *testing.T) {
 	locations, err := FetchLocationsWithContext(context.Background())
 	if err != nil {
@@ -432,6 +454,9 @@ func TestFetchLocations_DataValidation(t *testing.T) {
 	}
 }
 
+/*
+TestFetchDates_DataValidation checks that fetched date data has valid fields: positive ID and non-empty concert dates list.
+*/
 func TestFetchDates_DataValidation(t *testing.T) {
 	dates, err := FetchDatesWithContext(context.Background())
 	if err != nil {
@@ -447,6 +472,9 @@ func TestFetchDates_DataValidation(t *testing.T) {
 	}
 }
 
+/*
+TestFetchRelations_DataValidation checks that fetched relation data has valid fields: positive ID and non-empty dates locations map.
+*/
 func TestFetchRelations_DataValidation(t *testing.T) {
 	relations, err := FetchRelationsWithContext(context.Background())
 	if err != nil {
