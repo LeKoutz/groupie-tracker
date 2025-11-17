@@ -40,7 +40,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
-	if !strings.HasPrefix(r.URL.Path, "artist/") {
+	if !strings.HasPrefix(r.URL.Path, "/artist/") {
 		HandleErrors(w, http.StatusNotFound, http.StatusText(http.StatusNotFound), "Please check the resource URL and try again.")
 		return
 	}
