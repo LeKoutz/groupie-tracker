@@ -25,6 +25,7 @@ func main () {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handlers.HomeHandler)
 	mux.HandleFunc("/artist/", handlers.ArtistDetailsHandler)
+	mux.HandleFunc("/loading/", handlers.LoadingHandler)
 	mux.HandleFunc("/static/", handlers.ResourcesHandler)
 
 	// Start the server
