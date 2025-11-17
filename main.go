@@ -9,6 +9,8 @@ import (
 )
 
 func main () {
+	api.SetLoadingStatus(true, false, false)
+	// Initialize the data structures
 	go func() {
 		err := api.InitializeData()
 		if err != nil {
