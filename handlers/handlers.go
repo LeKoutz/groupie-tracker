@@ -14,9 +14,9 @@ import (
 
 // Parse templates once before server startup
 var (
-    index_tmpl  = template.Must(template.ParseFiles("templates/index.html"))
-    artist_tmpl = template.Must(template.ParseFiles("templates/artist_detail.html"))
-    error_tmpl  = template.Must(template.ParseFiles("templates/error.html"))
+	index_tmpl  = template.Must(template.ParseFiles("templates/index.html"))
+	artist_tmpl = template.Must(template.ParseFiles("templates/artist_detail.html"))
+	error_tmpl  = template.Must(template.ParseFiles("templates/error.html"))
 )
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -70,15 +70,11 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		HandleErrors(w, http.StatusNotFound, http.StatusText(http.StatusNotFound), err.Error())
 		return
 	}
-	data := struct {
-		ArtistDetails models.ArtistDetails
-	}{
-		ArtistDetails: models.ArtistDetails{
-			Artist:    *artist,
-			Locations: *locations,
-			Dates:     *dates,
-			Relations: *relations,
-		},
+	data := models.ArtistDetails{
+		Artist:    *artist,
+		Locations: *locations,
+		Dates:     *dates,
+		Relations: *relations,
 	}
 	if err := artist_tmpl.Execute(w, data); err != nil {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to complete your request. Please try again later")
@@ -109,7 +105,7 @@ func HandleErrors(w http.ResponseWriter, statusCode int, message, response strin
 		StatusCode:  statusCode,
 		Message:     http.StatusText(statusCode),
 		Response: 	 response,
-	}	
+	}
 	w.WriteHeader(statusCode)
 	if err := error_tmpl.Execute(w, errorData); err != nil {
 		http.Error(w, fmt.Sprintf("Error %d: %s %s", statusCode, message, response), statusCode)
