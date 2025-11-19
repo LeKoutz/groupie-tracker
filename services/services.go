@@ -2,9 +2,12 @@ package services
 
 import (
 	"fmt"
+	"sort"
+	"strings"
+	"time"
+	"unicode"
 	"groupie-tracker/api"
 	"groupie-tracker/models"
-	"sort"
 )
 
 func GetArtistByID(id int) (*models.Artists, error) {
@@ -47,6 +50,42 @@ func GetRelationsByID(id int) (*models.Relations, error) {
 
 const DateFormat = "02-01-2006" // dd-mm-yyyy
 
+// parseDate parses a date string in the format "dd-mm-yyyy" and returns a time.Time.
+// On parse error it returns the zero time.
+func parseDate(dateStr string) time.Time {
+	t, _ := time.Parse(DateFormat, dateStr)
+	return t
+}
+
+// capitalize makes the first rune uppercase and the rest lowercase.
+func capitalize(s string) string {
+	if s == "" {
+		return ""
+	}
+	runes := []rune(strings.ToLower(strings.TrimSpace(s)))
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
+// formatLocationName converts "city-country" into "City, Country".
+func formatLocationName(loc string) string {
+	loc = strings.ReplaceAll(loc, "_", " ")
+	parts := strings.Split(loc, "-")
+	for i, p := range parts {
+		parts[i] = capitalize(p)
+	}
+	return strings.Join(parts, ", ")
+}
+
+// formatLocations replaces the keys in DatesLocations with formatted names.
+func formatLocations(relations *models.Relations) {
+	formatted := make(map[string][]string, len(relations.DatesLocations))
+	for loc, dates := range relations.DatesLocations {
+		formatted[formatLocationName(loc)] = dates
+	}
+	relations.DatesLocations = formatted
+}
+
 // This function modifies the relations object in place.
 func ProcessRelations(relations *models.Relations) {
 	formatLocations(relations)
@@ -55,39 +94,29 @@ func ProcessRelations(relations *models.Relations) {
 }
 
 // sortDatesInLocations sorts the date arrays within each location in descending order
-// (newest dates first). The sorting is done in-place, modifying the original slices.
-//
-// Example:
-//   Input:  {"Paris": ["01-01-2024", "15-03-2024", "10-02-2024"]}
-//   Output: {"Paris": ["15-03-2024", "10-02-2024", "01-01-2024"]}
+// (newest dates first). The sorting is done in-place.
 func sortDatesInLocations(relations *models.Relations) {
-	for location, dates := range relations.DatesLocations {
+	for loc, dates := range relations.DatesLocations {
+		if len(dates) <= 1 {
+			continue
+		}
+		// sorting the slice referenced by the map entry; the slice header is copied
+		// but refers to the same backing array, so modifications are visible in the map.
 		sort.Slice(dates, func(i, j int) bool {
 			return parseDate(dates[i]).After(parseDate(dates[j]))
 		})
+		relations.DatesLocations[loc] = dates
 	}
 }
 
 // sortLocationsByDate sorts locations by their most recent (first) date and stores
 // the sorted location names in relations.SortedLocations. Locations are sorted in
-// descending order (newest first).
-//
-// Locations with empty date arrays are excluded from the sorted results.
-//
-// Example:
-//   DatesLocations: {
-//     "Paris, France": ["15-03-2024", ...],
-//     "London, UK": ["20-03-2024", ...],
-//     "Berlin, Germany": ["10-03-2024", ...]
-//   }
-//   Result: SortedLocations = ["London, UK", "Paris, France", "Berlin, Germany"]
+// descending order (newest first). Locations with no dates are excluded.
 func sortLocationsByDate(relations *models.Relations) {
 	// Pre-allocate slice with capacity to avoid resizing
 	locations := make([]string, 0, len(relations.DatesLocations))
-	
-	// Collect all locations that have at least one date
-	for loc := range relations.DatesLocations {
-		if len(relations.DatesLocations[loc]) > 0 {
+	for loc, dates := range relations.DatesLocations {
+		if len(dates) > 0 {
 			locations = append(locations, loc)
 		}
 	}
@@ -98,6 +127,6 @@ func sortLocationsByDate(relations *models.Relations) {
 		dateJ := parseDate(relations.DatesLocations[locations[j]][0])
 		return dateI.After(dateJ)
 	})
-	
+
 	relations.SortedLocations = locations
 }
