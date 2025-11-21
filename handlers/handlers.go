@@ -17,6 +17,7 @@ var (
     index_tmpl  = template.Must(template.ParseFiles("templates/index.html"))
     artist_tmpl = template.Must(template.ParseFiles("templates/artist_detail.html"))
     error_tmpl  = template.Must(template.ParseFiles("templates/error.html"))
+	loading_tmpl = template.Must(template.ParseFiles("templates/loading.html"))
 )
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -114,5 +115,28 @@ func HandleErrors(w http.ResponseWriter, statusCode int, message, response strin
 	if err := error_tmpl.Execute(w, errorData); err != nil {
 		http.Error(w, fmt.Sprintf("Error %d: %s %s", statusCode, message, response), statusCode)
 		return
+	}
+}
+
+func LoadingHandler(w http.ResponseWriter, r *http.Request) {
+	status := api.GetLoadingStatus()
+	if status.IsLoaded {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	if status.HasFailed {
+		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to load the data. Please try again later.")
+		return
+	} else {
+		w.Header().Set("Refresh", "1; url=/loading")
+		data := struct {
+			Message string
+		}{
+			Message: "Loading data...",
+		}
+		if err := loading_tmpl.Execute(w, data); err != nil {
+			HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to complete your request. Please try again later")
+			return
+		}
 	}
 }
