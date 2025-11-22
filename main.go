@@ -21,6 +21,8 @@ func main () {
 			api.SetLoadingStatus(false, true, false)
 		}
 	}()
+	// Refresh the data occasionally
+	go api.RefreshData()
 	// Set up routes
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handlers.HomeHandler)
