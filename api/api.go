@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"groupie-tracker/models"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -21,7 +22,15 @@ var (
 	All_Locations	[]models.Locations
 	All_Dates		[]models.Dates
 	All_Relations	[]models.Relations
+	Status			LoadingStatus
+	statusMutex		sync.RWMutex
 )
+
+type LoadingStatus struct {
+	IsLoading bool
+	IsLoaded  bool
+	HasFailed bool
+}
 
 // InitializeData fetches data from all APIs asynchronously.
 // If a fetch fails, it retries up to 2 times.
@@ -223,4 +232,20 @@ func FetchRelationsWithContext(ctx context.Context) ([]models.Relations, error) 
 		return nil, fmt.Errorf("JSON decode failed: %v", err)
 	}
 	return relations.Index, nil
+}
+
+func SetLoadingStatus(loading, loaded, failed bool) {
+	statusMutex.Lock()
+	defer statusMutex.Unlock()
+	Status = LoadingStatus{
+		IsLoading: loading,
+		IsLoaded:  loaded,
+		HasFailed: failed,
+	}
+}
+
+func GetLoadingStatus() LoadingStatus {
+	statusMutex.RLock()
+	defer statusMutex.RUnlock()
+	return Status
 }
