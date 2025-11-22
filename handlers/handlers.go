@@ -29,6 +29,10 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "This request method is not supported for the requested resource. Use GET request instead.")
 		return
 	}
+	if api.GetLoadingStatus().IsLoading {
+		http.Redirect(w, r, "/loading/", http.StatusSeeOther)
+		return
+	}
 	data := struct {
 		Artists []models.Artists
 	}{
