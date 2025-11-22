@@ -1,71 +1,32 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"io"
 	"net/http"
-	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 )
 
-/*
-TestFetchArtists verifies that FetchArtistsWithContext succeeds and returns a non-empty list of artists.
-*/
-func TestFetchArtists(t *testing.T) {
-	artists, err := FetchArtistsWithContext(context.Background())
-	if err != nil {
-		t.Errorf("Did not expect an error, but got: %v", err)
-	}
-	if len(artists) == 0 {
-		t.Errorf("Expected artists, but got empty slice")
-	}
-}
-
-/*
-TestFetchLocations verifies that FetchLocationsWithContext succeeds and returns a non-empty list of locations.
-*/
-func TestFetchLocations(t *testing.T) {
-	locations, err := FetchLocationsWithContext(context.Background())
-	if err != nil {
-		t.Errorf("Did not expect an error, but got: %v", err)
-	}
-	if len(locations) == 0 {
-		t.Errorf("Expected locations, but got empty slice")
-	}
-}
-
-/*
-TestFetchDates verifies that FetchDatesWithContext succeeds and returns a non-empty list of dates.
-*/
-func TestFetchDates(t *testing.T) {
-	dates, err := FetchDatesWithContext(context.Background())
-	if err != nil {
-		t.Errorf("Did not expect an error, but got: %v", err)
-	}
-	if len(dates) == 0 {
-		t.Errorf("Expected dates, but got empty slice")
-	}
-}
-
-/*
-TestFetchRelations verifies that FetchRelationsWithContext succeeds and returns a non-empty list of relations.
-*/
-func TestFetchRelations(t *testing.T) {
-	relations, err := FetchRelationsWithContext(context.Background())
-	if err != nil {
-		t.Errorf("Did not expect an error, but got: %v", err)
-	}
-	if len(relations) == 0 {
-		t.Errorf("Expected relations, but got empty slice")
-	}
-}
+// NOTE ABOUT TEST EXECUTION AND GLOBAL STATE
+// These tests intentionally mutate package-global variables (e.g., All_Artists, All_Locations,
+// All_Dates, All_Relations) and also swap out http.DefaultClient.Transport to mock HTTP calls.
+// Because of this shared mutable state, do NOT use t.Parallel() in this file; running these
+// tests in parallel can cause data races or flaky behavior across tests.
 
 /*
 TestFetchArtists_DataValidation checks that fetched artist data has valid fields: positive ID, non-empty name, members, creation date, first album, locations, concert dates, and relations.
 */
 func TestFetchArtists_DataValidation(t *testing.T) {
+	restore := setMockTransport(successTransport())
+	defer restore()
+
 	artists, err := FetchArtistsWithContext(context.Background())
 	if err != nil {
+		// Guard against accidental network usage: this test assumes successTransport is set.
 		t.Skip("Skipping data validation due to fetch error")
 	}
 	for _, artist := range artists {
@@ -101,12 +62,10 @@ func TestFetchArtists_DataValidation(t *testing.T) {
 TestFetchArtists_NetworkError simulates a network error by setting an invalid URL and verifies that FetchArtistsWithContext returns an error and nil artists.
 */
 func TestFetchArtists_NetworkError(t *testing.T) {
-	// Save original URL and restore after test
-	originalURL := ARTISTS_API
-	defer func() { ARTISTS_API = originalURL }()
-
-	// Set to invalid URL to simulate network error
-	ARTISTS_API = "http://invalid.url"
+	restore := setMockTransport(errorTransport(map[string]error{
+		"/api/artists": errors.New("dial error"),
+	}))
+	defer restore()
 
 	artists, err := FetchArtistsWithContext(context.Background())
 	if err == nil {
@@ -117,18 +76,60 @@ func TestFetchArtists_NetworkError(t *testing.T) {
 	}
 }
 
+//network error coverage for other endpoints
+func TestFetchLocations_NetworkError(t *testing.T) {
+	restore := setMockTransport(errorTransport(map[string]error{
+		"/api/locations": errors.New("dial error"),
+	}))
+	defer restore()
+
+	locations, err := FetchLocationsWithContext(context.Background())
+	if err == nil {
+		t.Error("Expected error for network issue, but got none")
+	}
+	if locations != nil {
+		t.Error("Expected nil locations on error")
+	}
+}
+
+func TestFetchDates_NetworkError(t *testing.T) {
+	restore := setMockTransport(errorTransport(map[string]error{
+		"/api/dates": errors.New("dial error"),
+	}))
+	defer restore()
+
+	dates, err := FetchDatesWithContext(context.Background())
+	if err == nil {
+		t.Error("Expected error for network issue, but got none")
+	}
+	if dates != nil {
+		t.Error("Expected nil dates on error")
+	}
+}
+
+func TestFetchRelations_NetworkError(t *testing.T) {
+	restore := setMockTransport(errorTransport(map[string]error{
+		"/api/relation": errors.New("dial error"),
+	}))
+	defer restore()
+
+	relations, err := FetchRelationsWithContext(context.Background())
+	if err == nil {
+		t.Error("Expected error for network issue, but got none")
+	}
+	if relations != nil {
+		t.Error("Expected nil relations on error")
+	}
+}
+
 /*
 TestFetchArtists_StatusCodeError uses a mock server returning a 500 status code to verify that FetchArtistsWithContext returns an error and nil artists.
 */
 func TestFetchArtists_StatusCodeError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
+	restore := setMockTransport(statusTransport(map[string]int{
+		"/api/artists": http.StatusInternalServerError,
 	}))
-	defer server.Close()
-
-	originalURL := ARTISTS_API
-	ARTISTS_API = server.URL
-	defer func() { ARTISTS_API = originalURL }()
+	defer restore()
 
 	artists, err := FetchArtistsWithContext(context.Background())
 	if err == nil {
@@ -143,15 +144,10 @@ func TestFetchArtists_StatusCodeError(t *testing.T) {
 TestFetchArtists_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchArtistsWithContext returns a decode error and nil artists.
 */
 func TestFetchArtists_JSONDecodeError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("invalid json"))
+	restore := setMockTransport(bodyTransport(map[string]mockBody{
+		"/api/artists": {status: http.StatusOK, body: "invalid json"},
 	}))
-	defer server.Close()
-
-	originalURL := ARTISTS_API
-	ARTISTS_API = server.URL
-	defer func() { ARTISTS_API = originalURL }()
+	defer restore()
 
 	artists, err := FetchArtistsWithContext(context.Background())
 	if err == nil {
@@ -166,14 +162,10 @@ func TestFetchArtists_JSONDecodeError(t *testing.T) {
 TestFetchLocations_StatusCodeError uses a mock server returning a 404 status code to verify that FetchLocationsWithContext returns an error and nil locations.
 */
 func TestFetchLocations_StatusCodeError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
+	restore := setMockTransport(statusTransport(map[string]int{
+		"/api/locations": http.StatusNotFound,
 	}))
-	defer server.Close()
-
-	originalURL := LOCATIONS_API
-	LOCATIONS_API = server.URL
-	defer func() { LOCATIONS_API = originalURL }()
+	defer restore()
 
 	locations, err := FetchLocationsWithContext(context.Background())
 	if err == nil {
@@ -188,15 +180,10 @@ func TestFetchLocations_StatusCodeError(t *testing.T) {
 TestFetchLocations_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchLocationsWithContext returns a decode error and nil locations.
 */
 func TestFetchLocations_JSONDecodeError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("invalid json"))
+	restore := setMockTransport(bodyTransport(map[string]mockBody{
+		"/api/locations": {status: http.StatusOK, body: "invalid json"},
 	}))
-	defer server.Close()
-
-	originalURL := LOCATIONS_API
-	LOCATIONS_API = server.URL
-	defer func() { LOCATIONS_API = originalURL }()
+	defer restore()
 
 	locations, err := FetchLocationsWithContext(context.Background())
 	if err == nil {
@@ -211,15 +198,18 @@ func TestFetchLocations_JSONDecodeError(t *testing.T) {
 TestInitializeData_AllSuccess tests that InitializeData successfully loads all data (artists, locations, dates, relations) when all APIs are working.
 */
 func setupInitializeDataTest() (func(), func()) {
+	// setupInitializeDataTest provides two closures:
+	//   reset:  explicitly clear package globals before running a test case
+	//   restore: defer this to restore both the globals and the default HTTP transport after the test
+	// This pattern prevents cross-test interference since tests in this file share global state
+	// and mutate http.DefaultClient.Transport.
 	// Save original state
 	originalArtists := All_Artists
 	originalLocations := All_Locations
 	originalDates := All_Dates
 	originalRelations := All_Relations
-	originalArtistsURL := ARTISTS_API
-	originalLocationsURL := LOCATIONS_API
-	originalDatesURL := DATES_API
-	originalRelationsURL := RELATIONS_API
+	// Save original transport
+	originalTransport := http.DefaultClient.Transport
 
 	/*
 		reset: A function you call manually to set globals to nil
@@ -238,10 +228,7 @@ func setupInitializeDataTest() (func(), func()) {
 		All_Locations = originalLocations
 		All_Dates = originalDates
 		All_Relations = originalRelations
-		ARTISTS_API = originalArtistsURL
-		LOCATIONS_API = originalLocationsURL
-		DATES_API = originalDatesURL
-		RELATIONS_API = originalRelationsURL
+		http.DefaultClient.Transport = originalTransport
 	}
 
 	return reset, restore
@@ -252,7 +239,10 @@ func TestInitializeData_AllSuccess(t *testing.T) {
 	defer restore()
 	reset()
 
-	// Use real APIs for this test (they should work)
+	// Mock all endpoints as success
+	restoreTransport := setMockTransport(successTransport())
+	defer restoreTransport()
+
 	errors := InitializeData()
 
 	if errors != nil {
@@ -280,8 +270,11 @@ func TestInitializeData_PartialFailure(t *testing.T) {
 	defer restore()
 	reset()
 
-	// Set one API to fail
-	ARTISTS_API = "http://invalid.url"
+	// Make artists fail, others succeed
+	restoreTransport := setMockTransport(mixedTransport(map[string]endpointBehavior{
+		"/api/artists": {kind: kindError},
+	}))
+	defer restoreTransport()
 
 	errors := InitializeData()
 
@@ -314,11 +307,9 @@ func TestInitializeData_AllFailure(t *testing.T) {
 	defer restore()
 	reset()
 
-	// Set all APIs to fail
-	ARTISTS_API = "http://invalid.url"
-	LOCATIONS_API = "http://invalid.url"
-	DATES_API = "http://invalid.url"
-	RELATIONS_API = "http://invalid.url"
+	// All endpoints fail
+	restoreTransport := setMockTransport(failAllTransport())
+	defer restoreTransport()
 
 	errors := InitializeData()
 
@@ -343,18 +334,75 @@ func TestInitializeData_AllFailure(t *testing.T) {
 	}
 }
 
+// --- Retry transport and test for InitializeData retry logic ---
+
+// retryThenSuccessTransport returns errors for the first N requests per path, then succeeds
+func retryThenSuccessTransport(failuresByPath map[string]int) http.RoundTripper {
+	// retryThenSuccessTransport simulates transient failures per endpoint path.
+	// For each provided path, the first N (map value) requests fail with a network error,
+	// and subsequent requests succeed by delegating to successTransport().
+	// This is used to exercise InitializeData's retry logic (2 retries = 3 total attempts).
+	// Path matching uses substring checks against r.URL.Path or r.URL.String().
+	var mu sync.Mutex
+	counts := make(map[string]int)
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		// Determine matched key
+		matched := ""
+		for path := range failuresByPath {
+			if strings.Contains(r.URL.Path, path) || strings.Contains(r.URL.String(), path) {
+				matched = path
+				break
+			}
+		}
+		if matched != "" {
+			mu.Lock()
+			counts[matched]++
+			c := counts[matched]
+			limit := failuresByPath[matched]
+			mu.Unlock()
+			if c <= limit {
+				return nil, errors.New("simulated transient error")
+			}
+			// After failures, return success for that endpoint
+			return successTransport().RoundTrip(r)
+		}
+		// Unspecified: default to success
+		return successTransport().RoundTrip(r)
+	})
+}
+
+func TestInitializeData_RetryEventuallySucceeds(t *testing.T) {
+	reset, restore := setupInitializeDataTest()
+	defer restore()
+	reset()
+
+	// Fail the first 2 attempts per endpoint, then succeed. InitializeData retries up to 2 times (3 total attempts)
+	rt := retryThenSuccessTransport(map[string]int{
+		"/api/artists":   2,
+		"/api/locations": 2,
+		"/api/dates":     2,
+		"/api/relation":  2,
+	})
+	restoreTransport := setMockTransport(rt)
+	defer restoreTransport()
+
+	errs := InitializeData()
+	if errs != nil {
+		t.Fatalf("Expected no errors after retries, got: %v", errs)
+	}
+	if len(All_Artists) == 0 || len(All_Locations) == 0 || len(All_Dates) == 0 || len(All_Relations) == 0 {
+		t.Fatal("Expected all datasets to be loaded after retries")
+	}
+}
+
 /*
 TestFetchDates_StatusCodeError uses a mock server returning a 400 status code to verify that FetchDatesWithContext returns an error and nil dates.
 */
 func TestFetchDates_StatusCodeError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadRequest)
+	restore := setMockTransport(statusTransport(map[string]int{
+		"/api/dates": http.StatusBadRequest,
 	}))
-	defer server.Close()
-
-	originalURL := DATES_API
-	DATES_API = server.URL
-	defer func() { DATES_API = originalURL }()
+	defer restore()
 
 	dates, err := FetchDatesWithContext(context.Background())
 	if err == nil {
@@ -369,15 +417,10 @@ func TestFetchDates_StatusCodeError(t *testing.T) {
 TestFetchDates_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchDatesWithContext returns a decode error and nil dates.
 */
 func TestFetchDates_JSONDecodeError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("invalid json"))
+	restore := setMockTransport(bodyTransport(map[string]mockBody{
+		"/api/dates": {status: http.StatusOK, body: "invalid json"},
 	}))
-	defer server.Close()
-
-	originalURL := DATES_API
-	DATES_API = server.URL
-	defer func() { DATES_API = originalURL }()
+	defer restore()
 
 	dates, err := FetchDatesWithContext(context.Background())
 	if err == nil {
@@ -392,14 +435,10 @@ func TestFetchDates_JSONDecodeError(t *testing.T) {
 TestFetchRelations_StatusCodeError uses a mock server returning a 403 status code to verify that FetchRelationsWithContext returns an error and nil relations.
 */
 func TestFetchRelations_StatusCodeError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusForbidden)
+	restore := setMockTransport(statusTransport(map[string]int{
+		"/api/relation": http.StatusForbidden,
 	}))
-	defer server.Close()
-
-	originalURL := RELATIONS_API
-	RELATIONS_API = server.URL
-	defer func() { RELATIONS_API = originalURL }()
+	defer restore()
 
 	relations, err := FetchRelationsWithContext(context.Background())
 	if err == nil {
@@ -414,15 +453,10 @@ func TestFetchRelations_StatusCodeError(t *testing.T) {
 TestFetchRelations_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchRelationsWithContext returns a decode error and nil relations.
 */
 func TestFetchRelations_JSONDecodeError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("invalid json"))
+	restore := setMockTransport(bodyTransport(map[string]mockBody{
+		"/api/relation": {status: http.StatusOK, body: "invalid json"},
 	}))
-	defer server.Close()
-
-	originalURL := RELATIONS_API
-	RELATIONS_API = server.URL
-	defer func() { RELATIONS_API = originalURL }()
+	defer restore()
 
 	relations, err := FetchRelationsWithContext(context.Background())
 	if err == nil {
@@ -437,8 +471,12 @@ func TestFetchRelations_JSONDecodeError(t *testing.T) {
 TestFetchLocations_DataValidation checks that fetched location data has valid fields: positive ID, non-empty locations list, and non-empty dates string.
 */
 func TestFetchLocations_DataValidation(t *testing.T) {
+	restore := setMockTransport(successTransport())
+	defer restore()
+
 	locations, err := FetchLocationsWithContext(context.Background())
 	if err != nil {
+		// Guard against accidental network usage: this test assumes successTransport is set.
 		t.Skip("Skipping data validation due to fetch error")
 	}
 	for _, loc := range locations {
@@ -458,8 +496,12 @@ func TestFetchLocations_DataValidation(t *testing.T) {
 TestFetchDates_DataValidation checks that fetched date data has valid fields: positive ID and non-empty concert dates list.
 */
 func TestFetchDates_DataValidation(t *testing.T) {
+	restore := setMockTransport(successTransport())
+	defer restore()
+
 	dates, err := FetchDatesWithContext(context.Background())
 	if err != nil {
+		// Guard against accidental network usage: this test assumes successTransport is set.
 		t.Skip("Skipping data validation due to fetch error")
 	}
 	for _, date := range dates {
@@ -476,8 +518,12 @@ func TestFetchDates_DataValidation(t *testing.T) {
 TestFetchRelations_DataValidation checks that fetched relation data has valid fields: positive ID and non-empty dates locations map.
 */
 func TestFetchRelations_DataValidation(t *testing.T) {
+	restore := setMockTransport(successTransport())
+	defer restore()
+
 	relations, err := FetchRelationsWithContext(context.Background())
 	if err != nil {
+		// Guard against accidental network usage: this test assumes successTransport is set.
 		t.Skip("Skipping data validation due to fetch error")
 	}
 	for _, rel := range relations {
@@ -488,4 +534,159 @@ func TestFetchRelations_DataValidation(t *testing.T) {
 			t.Error("Relation DatesLocations should not be empty")
 		}
 	}
+}
+
+// ---- Loading status accessors ----
+func TestLoadingStatusAccessors(t *testing.T) {
+	SetLoadingStatus(true, false, false)
+	s := GetLoadingStatus()
+	if !s.IsLoading || s.IsLoaded || s.HasFailed {
+		t.Errorf("unexpected status after first set: %+v", s)
+	}
+
+	SetLoadingStatus(false, true, false)
+	s = GetLoadingStatus()
+	if s.IsLoading || !s.IsLoaded || s.HasFailed {
+		t.Errorf("unexpected status after second set: %+v", s)
+	}
+
+	SetLoadingStatus(false, false, true)
+	s = GetLoadingStatus()
+	if s.IsLoading || s.IsLoaded || !s.HasFailed {
+		t.Errorf("unexpected status after third set: %+v", s)
+	}
+}
+
+// ---- Test helpers ----
+
+// roundTripFunc helps us define inline RoundTripper implementations
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+// setMockTransport sets http.DefaultClient.Transport and returns a restore function
+func setMockTransport(rt http.RoundTripper) func() {
+	prev := http.DefaultClient.Transport
+	http.DefaultClient.Transport = rt
+	return func() { http.DefaultClient.Transport = prev }
+}
+
+// Helpers to build responses
+func httpResponse(status int, body string) *http.Response {
+	return &http.Response{
+		StatusCode: status,
+		Body:       io.NopCloser(bytes.NewBufferString(body)),
+		Header:     make(http.Header),
+		Request:    &http.Request{},
+	}
+}
+
+// successTransport returns valid JSON bodies for all endpoints
+func successTransport() http.RoundTripper {
+	// The JSON payloads below are intentionally minimal yet valid for the current model shapes
+	// (Artists, LocationsIndex, DatesIndex, RelationIndex). If the model structures change
+	// (fields, nesting, required properties), update these payloads accordingly.
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		url := r.URL.String()
+		switch {
+		case strings.Contains(url, "/api/artists"):
+			// Minimal valid artists array
+			body := `[{"id":1,"image":"img","name":"Band","members":["A","B"],"creationDate":2000,"firstAlbum":"01-01-2001","locations":"/api/locations/1","concertDates":"/api/dates/1","relations":"/api/relation/1"}]`
+			return httpResponse(http.StatusOK, body), nil
+		case strings.Contains(url, "/api/locations"):
+			body := `{"index":[{"id":1,"locations":["paris-france"],"dates":"/api/dates/1"}]}`
+			return httpResponse(http.StatusOK, body), nil
+		case strings.Contains(url, "/api/dates"):
+			body := `{"index":[{"id":1,"dates":["01-01-2020"]}]}`
+			return httpResponse(http.StatusOK, body), nil
+		case strings.Contains(url, "/api/relation"):
+			body := `{"index":[{"id":1,"datesLocations":{"paris-france":["01-01-2020"]}}]}`
+			return httpResponse(http.StatusOK, body), nil
+		default:
+			return httpResponse(http.StatusNotFound, ""), nil
+		}
+	})
+}
+
+// statusTransport returns specific status codes for selected paths
+func statusTransport(statusByPath map[string]int) http.RoundTripper {
+	// Path matching in all transport helpers (statusTransport, errorTransport, bodyTransport,
+	// mixedTransport) uses substring checks against r.URL.Path and r.URL.String().
+	// To avoid accidental matches, prefer unique path stubs like "/api/artists" rather than
+	// overly generic substrings. If exact matching is desired, consider tightening the matcher.
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		for path, code := range statusByPath {
+			if strings.Contains(r.URL.Path, path) || strings.Contains(r.URL.String(), path) {
+				return httpResponse(code, ""), nil
+			}
+		}
+		// default success for others
+		return successTransport().RoundTrip(r)
+	})
+}
+
+// errorTransport returns errors for selected paths
+func errorTransport(errByPath map[string]error) http.RoundTripper {
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		for path, e := range errByPath {
+			if strings.Contains(r.URL.Path, path) || strings.Contains(r.URL.String(), path) {
+				return nil, e
+			}
+		}
+		// default success for others
+		return successTransport().RoundTrip(r)
+	})
+}
+
+type mockBody struct {
+	status int
+	body   string
+}
+
+// bodyTransport returns custom body for selected paths
+func bodyTransport(bodyByPath map[string]mockBody) http.RoundTripper {
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		for path, mb := range bodyByPath {
+			if strings.Contains(r.URL.Path, path) || strings.Contains(r.URL.String(), path) {
+				return httpResponse(mb.status, mb.body), nil
+			}
+		}
+		// default success for others
+		return successTransport().RoundTrip(r)
+	})
+}
+
+// endpoint behavior for mixed transport
+type endpointBehavior struct{ kind int }
+
+const (
+	kindSuccess = iota
+	kindError
+	kindStatus500
+)
+
+// mixedTransport allows specifying behavior per path; unspecified default to success
+func mixedTransport(behaviors map[string]endpointBehavior) http.RoundTripper {
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		for path, b := range behaviors {
+			if strings.Contains(r.URL.Path, path) || strings.Contains(r.URL.String(), path) {
+				switch b.kind {
+				case kindError:
+					return nil, errors.New("simulated network error")
+				case kindStatus500:
+					return httpResponse(http.StatusInternalServerError, ""), nil
+				default:
+					// success
+					return successTransport().RoundTrip(r)
+				}
+			}
+		}
+		return successTransport().RoundTrip(r)
+	})
+}
+
+func failAllTransport() http.RoundTripper {
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		return nil, errors.New("simulated network error")
+	})
 }
