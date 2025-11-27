@@ -14,9 +14,9 @@ import (
 
 // Parse templates once before server startup
 var (
-    index_tmpl  = template.Must(template.ParseFiles("templates/index.html"))
-    artist_tmpl = template.Must(template.ParseFiles("templates/artist_detail.html"))
-    error_tmpl  = template.Must(template.ParseFiles("templates/error.html"))
+	index_tmpl   = template.Must(template.ParseFiles("templates/index.html"))
+	artist_tmpl  = template.Must(template.ParseFiles("templates/artist_detail.html"))
+	error_tmpl   = template.Must(template.ParseFiles("templates/error.html"))
 	loading_tmpl = template.Must(template.ParseFiles("templates/loading.html"))
 )
 
@@ -45,7 +45,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
-	if !strings.HasPrefix(r.URL.Path, "artist/") {
+	if !strings.HasPrefix(r.URL.Path, "/artist/") {
 		HandleErrors(w, http.StatusNotFound, http.StatusText(http.StatusNotFound), "Please check the resource URL and try again.")
 		return
 	}
@@ -107,14 +107,14 @@ func ResourcesHandler(w http.ResponseWriter, r *http.Request) {
 // HandleErrors renders an error page with the given status code, error message, and response.
 func HandleErrors(w http.ResponseWriter, statusCode int, message, response string) {
 	errorData := struct {
-		StatusCode 	int
-		Message    	string
-		Response string
+		StatusCode int
+		Message    string
+		Response   string
 	}{
-		StatusCode:  statusCode,
-		Message:     http.StatusText(statusCode),
-		Response: 	 response,
-	}	
+		StatusCode: statusCode,
+		Message:    http.StatusText(statusCode),
+		Response:   response,
+	}
 	w.WriteHeader(statusCode)
 	if err := error_tmpl.Execute(w, errorData); err != nil {
 		http.Error(w, fmt.Sprintf("Error %d: %s %s", statusCode, message, response), statusCode)
