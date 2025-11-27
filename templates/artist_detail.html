@@ -2,9 +2,109 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Artist detail (placeholder)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groupie Tracker: {{.ArtistDetails.Artist.Name}}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>Artist detail placeholder</h1>
+
+<header>
+    <nav>
+        <a href="/"><h1>GROUPIE TRACKER</h1></a>
+    </nav>
+</header>
+
+<main class="artist-main">
+
+    <section class="artist-detail-wrapper">
+
+        <a href="/" class="back-button">← Back</a>
+
+        <div class="artist-detail-layout">
+
+            <!-- IMAGE CARD -->
+            <div class="artist-detail-image">
+                <img src="{{.ArtistDetails.Artist.Image}}" alt="{{.ArtistDetails.Artist.Name}}">
+            </div>
+
+            <!-- INFO CARD -->
+            <div class="artist-detail-info">
+                <h2>{{.ArtistDetails.Artist.Name}}</h2>
+
+                <p>
+                    <strong class="artist-detail-label">
+                        Members ({{len .ArtistDetails.Artist.Members}})
+                    </strong>
+                </p>
+                <ul>
+                    {{range .ArtistDetails.Artist.Members}}
+                        <li>{{.}}</li>
+                    {{end}}
+                </ul>
+
+                <p>
+                    <span class="artist-detail-label">Founded:</span>
+                    {{.ArtistDetails.Artist.CreationDate}}
+                </p>
+                <p>
+                    <span class="artist-detail-label">First Release:</span>
+                    {{.ArtistDetails.Artist.FirstAlbum}}
+                </p>
+            </div>
+
+            <!-- TOUR DATES CARD -->
+            <div class="artist-detail-dates">
+                {{$dates := .ArtistDetails.Dates.ConcertDates}}
+                {{$map := .ArtistDetails.Relations.DatesLocations}}
+
+                {{if gt (len $dates) 0}}
+                    <!-- MOST RECENT -->
+                    <h3>Most Recent Tour Date</h3>
+                    <ul>
+                        <li>
+                            {{/* first date in the slice */}}
+                            {{$d := index $dates 0}}
+                            <strong>{{$d}}</strong>
+                            {{with index $map $d}}
+                                {{range .}}
+                                    <div>{{.}}</div>
+                                {{end}}
+                            {{end}}
+                        </li>
+                    </ul>
+
+                    {{if gt (len $dates) 1}}
+                        <!-- PAST DATES -->
+                        <h3>Past Tour Dates</h3>
+                        <ul>
+                            {{range $i, $d := $dates}}
+                                {{if ne $i 0}}
+                                    <li>
+                                        <strong>{{$d}}</strong>
+                                        {{with index $map $d}}
+                                            {{range .}}
+                                                <div>{{.}}</div>
+                                            {{end}}
+                                        {{end}}
+                                    </li>
+                                {{end}}
+                            {{end}}
+                        </ul>
+                    {{end}}
+                {{else}}
+                    <p>No tour dates available.</p>
+                {{end}}
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <p>&copy; 2025 Groupie Tracker by cktistak, gkoutzos, ttsopani</p>
+</footer>
+
 </body>
 </html>

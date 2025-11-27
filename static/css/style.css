@@ -233,3 +233,123 @@ footer p {
     margin: 0;
     font-size: 0.9em;
 }
+
+
+/* ARTIST DETAIL PAGE */
+
+.artist-detail-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Back button */
+.back-button {
+    display: inline-block;
+    margin-bottom: 16px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid #97CE4C;
+    color: #97CE4C;
+    background-color: #141b23;
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.back-button:hover {
+    background-color: #97CE4C;
+    color: #20232A;
+}
+
+/* 3 columns that flow naturally */
+.artist-detail-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+/* IMAGE COLUMN */
+.artist-detail-image {
+    flex: 0 0 260px; /* preferred width, but flexible */
+}
+
+.artist-detail-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
+/* INFO COLUMN */
+.artist-detail-info {
+    flex: 1;
+}
+
+.artist-detail-info h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.8em;
+    color: #f7f7f7;
+}
+
+.artist-detail-info p {
+    margin: 6px 0;
+    font-size: 0.95em;
+}
+
+.artist-detail-info ul {
+    list-style: disc;
+    padding-left: 20px;
+    margin: 4px 0 12px 0;
+}
+
+.artist-detail-info li {
+    margin: 2px 0;
+    font-size: 0.95em;
+}
+
+.artist-detail-label {
+    font-weight: 600;
+    color: #97CE4C;
+}
+
+/* DATES COLUMN */
+.artist-detail-dates {
+    flex: 1;
+}
+
+.artist-detail-dates h3 {
+    margin-top: 0;
+    margin-bottom: 6px;
+    font-size: 1.1em;
+    color: #97CE4C;
+}
+
+/* bullet points like members */
+.artist-detail-dates ul {
+    list-style: disc;
+    padding-left: 20px;
+    margin: 0 0 12px 0;
+}
+
+.artist-detail-dates li {
+    margin-bottom: 6px;
+    font-size: 0.95em;
+}
+
+.artist-detail-dates strong {
+    color: #f7f7f7;
+}
+
+/* stack on smaller screens */
+@media (max-width: 900px) {
+    .artist-detail-layout {
+        flex-direction: column;
+    }
+
+    .artist-detail-image {
+        max-width: 320px;
+    }
+}
