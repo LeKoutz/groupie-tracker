@@ -272,7 +272,7 @@ footer p {
 
 /* IMAGE COLUMN */
 .artist-detail-image {
-    flex: 0 0 260px; /* preferred width, but flexible */
+    flex: 0 0 260px;
 }
 
 .artist-detail-image img {
@@ -294,9 +294,12 @@ footer p {
     color: #f7f7f7;
 }
 
-.artist-detail-info p {
+.artist-detail-info p,
+.artist-detail-info li {
     margin: 6px 0;
     font-size: 0.95em;
+    font-weight: 400;
+    color: #f7f7f7;
 }
 
 .artist-detail-info ul {
@@ -305,26 +308,29 @@ footer p {
     margin: 4px 0 12px 0;
 }
 
-.artist-detail-info li {
-    margin: 2px 0;
-    font-size: 0.95em;
-}
-
-.artist-detail-label {
-    font-weight: 600;
-    color: #97CE4C;
-}
-
 /* DATES COLUMN */
 .artist-detail-dates {
     flex: 1;
 }
 
+/* unified label style */
+.artist-detail-label,
 .artist-detail-dates h3 {
-    margin-top: 0;
-    margin-bottom: 6px;
-    font-size: 1.1em;
     color: #97CE4C;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+/* keep this so strong labels dont get extra bold */
+strong.artist-detail-label {
+    font-weight: 600;
+}
+
+/* unified normal text style */
+.artist-detail-dates li {
+    font-size: 0.95em;
+    font-weight: 400;
+    color: #f7f7f7;
 }
 
 /* bullet points like members */
@@ -332,11 +338,6 @@ footer p {
     list-style: disc;
     padding-left: 20px;
     margin: 0 0 12px 0;
-}
-
-.artist-detail-dates li {
-    margin-bottom: 6px;
-    font-size: 0.95em;
 }
 
 .artist-detail-dates strong {

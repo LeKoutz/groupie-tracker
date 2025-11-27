@@ -64,7 +64,7 @@
                         <li>
                             {{/* first date in the slice */}}
                             {{$d := index $dates 0}}
-                            <strong>{{$d}}</strong>
+                            {{$d}}
                             {{with index $map $d}}
                                 {{range .}}
                                     <div>{{.}}</div>
@@ -80,7 +80,7 @@
                             {{range $i, $d := $dates}}
                                 {{if ne $i 0}}
                                     <li>
-                                        <strong>{{$d}}</strong>
+                                        {{$d}}
                                         {{with index $map $d}}
                                             {{range .}}
                                                 <div>{{.}}</div>
