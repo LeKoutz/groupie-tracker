@@ -249,3 +249,38 @@ func GetLoadingStatus() LoadingStatus {
 	defer statusMutex.RUnlock()
 	return Status
 }
+
+// RefreshData automatically refreshes the API data every 24hours if the fetch succeeded,
+// or every 1 second if it failed
+func RefreshData() {
+	GetLoadingStatus()
+	for {
+		if GetLoadingStatus().IsLoading {
+			continue
+	} else if GetLoadingStatus().IsLoaded {
+		time.Sleep(24 * time.Hour)
+		fmt.Println("Refreshing data...")
+		SetLoadingStatus(true, false, false)
+		err := InitializeData()
+		if err != nil {
+			SetLoadingStatus(false, false, true)
+			continue
+		} else {
+			SetLoadingStatus(false, true, false)
+			continue
+		}
+	} else if GetLoadingStatus().HasFailed {
+		time.Sleep(1 * time.Second)
+		fmt.Println("Refreshing data...")
+		SetLoadingStatus(true, false, false)
+		err := InitializeData()
+		if err != nil {
+			SetLoadingStatus(false, false, true)
+			continue
+		} else {
+			SetLoadingStatus(false, true, false)
+			continue
+		}
+	}
+	}
+}
