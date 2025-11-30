@@ -236,9 +236,8 @@ footer p {
 
 
 /* ARTIST DETAIL PAGE */
-
 .artist-detail-wrapper {
-    max-width: 1000px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 20px;
     box-sizing: border-box;
@@ -256,6 +255,7 @@ footer p {
     text-decoration: none;
     font-size: 0.9em;
     transition: background-color 0.2s ease, color 0.2s ease;
+    align-self: flex-start;
 }
 
 .back-button:hover {
@@ -263,11 +263,12 @@ footer p {
     color: #20232A;
 }
 
-/* 3 columns that flow naturally */
 .artist-detail-layout {
     display: flex;
-    gap: 24px;
+    justify-content: center;
+    gap: 32px;
     align-items: flex-start;
+    margin: 0 auto;
 }
 
 /* IMAGE COLUMN */
@@ -284,46 +285,50 @@ footer p {
 
 /* INFO COLUMN */
 .artist-detail-info {
-    flex: 1;
+    flex: 0 1 auto;
 }
 
 .artist-detail-info h2 {
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 18px;
     font-size: 1.8em;
     color: #f7f7f7;
 }
 
-.artist-detail-info p,
-.artist-detail-info li {
+/* members heading */
+.artist-detail-info p {
     margin: 6px 0;
     font-size: 0.95em;
     font-weight: 400;
     color: #f7f7f7;
 }
 
+/* names text */
+.artist-detail-info li {
+    font-size: 0.95em;
+    font-weight: 400;
+    color: #f7f7f7;
+}
+
+/* names list */
 .artist-detail-info ul {
     list-style: disc;
     padding-left: 20px;
-    margin: 4px 0 12px 0;
+    margin: 0 0 12px 0;
+    margin-bottom: 20px;
 }
 
 /* DATES COLUMN */
 .artist-detail-dates {
-    flex: 1;
+    margin-top: 8px;
 }
 
-/* unified label style */
-.artist-detail-label,
-.artist-detail-dates h3 {
+/* unified "headers" */
+.artist-detail-label {
     color: #97CE4C;
     font-weight: 600;
     font-size: 0.95em;
-}
-
-/* keep this so strong labels dont get extra bold */
-strong.artist-detail-label {
-    font-weight: 600;
+    margin-bottom: 6px;
 }
 
 /* unified normal text style */
@@ -333,15 +338,11 @@ strong.artist-detail-label {
     color: #f7f7f7;
 }
 
-/* bullet points like members */
+/* tour dates list */
 .artist-detail-dates ul {
     list-style: disc;
     padding-left: 20px;
     margin: 0 0 12px 0;
-}
-
-.artist-detail-dates strong {
-    color: #f7f7f7;
 }
 
 /* stack on smaller screens */
