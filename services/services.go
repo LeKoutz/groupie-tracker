@@ -51,30 +51,62 @@ func GetRelationsByID(id int) (*models.Relations, error) {
 const DateFormat = "02-01-2006" // dd-mm-yyyy
 
 // parseDate parses a date string in the format "dd-mm-yyyy" and returns a time.Time.
-// On parse error it returns the zero time.
-func parseDate(dateStr string) time.Time {
-	t, _ := time.Parse(DateFormat, dateStr)
-	return t
+// It accepts a few common separator variants and trims whitespace. On failure it
+// returns a non-nil error so callers can decide how to handle invalid dates.
+func parseDate(dateStr string) (time.Time, error) {
+	s := strings.TrimSpace(dateStr)
+	if s == "" {
+		return time.Time{}, fmt.Errorf("empty date")
+	}
+
+	// remove leading '*' markers that appear in the API and trim spaces
+	s = strings.TrimLeftFunc(s, func(r rune) bool { return r == '*' || unicode.IsSpace(r) })
+
+	// normalize common separators to '-'
+	s = strings.ReplaceAll(s, "/", "-")
+	s = strings.ReplaceAll(s, ".", "-")
+
+	t, err := time.Parse(DateFormat, s)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid date %q", dateStr)
+	}
+	return t, nil
 }
 
-// capitalize makes the first rune uppercase and the rest lowercase.
-func capitalize(s string) string {
+// titleCase converts a string into Title Case for each word while trimming
+// excessive whitespace.
+func titleCase(s string) string {
+	s = strings.TrimSpace(s)
 	if s == "" {
 		return ""
 	}
-	runes := []rune(strings.ToLower(strings.TrimSpace(s)))
-	runes[0] = unicode.ToUpper(runes[0])
-	return string(runes)
+	words := strings.Fields(strings.ToLower(s))
+	for i, w := range words {
+		runes := []rune(w)
+		if len(runes) == 0 {
+			continue
+		}
+		runes[0] = unicode.ToUpper(runes[0])
+		words[i] = string(runes)
+	}
+	return strings.Join(words, " ")
 }
 
 // formatLocationName converts "city-country" into "City, Country".
 func formatLocationName(loc string) string {
 	loc = strings.ReplaceAll(loc, "_", " ")
-	parts := strings.Split(loc, "-")
-	for i, p := range parts {
-		parts[i] = capitalize(p)
+	// Split by the last hyphen so values like "san-juan-puerto-rico" are
+	// interpreted sensibly as "san-juan, puerto-rico" rather than
+	// "san, juan, puerto, rico". If there's no hyphen, title-case the whole
+	// string.
+	if idx := strings.LastIndex(loc, "-"); idx != -1 {
+		left := strings.ReplaceAll(loc[:idx], "-", " ")
+		right := strings.ReplaceAll(loc[idx+1:], "-", " ")
+		left = titleCase(left)
+		right = titleCase(right)
+		return strings.TrimSpace(left) + ", " + strings.TrimSpace(right)
 	}
-	return strings.Join(parts, ", ")
+	return titleCase(loc)
 }
 
 // formatLocations replaces the keys in DatesLocations with formatted names.
@@ -93,6 +125,17 @@ func ProcessRelations(relations *models.Relations) {
 	sortLocationsByDate(relations)
 }
 
+// dateNewer returns true if dateA is newer (later) than dateB.
+// It returns false if either date cannot be parsed (treating unparseable dates as older).
+func dateNewer(dateA, dateB string) bool {
+	a, errA := parseDate(dateA)
+	b, errB := parseDate(dateB)
+	if errA != nil || errB != nil {
+		return errA == nil
+	}
+	return a.After(b)
+}
+
 // sortDatesInLocations sorts the date arrays within each location in descending order
 // (newest dates first). The sorting is done in-place.
 func sortDatesInLocations(relations *models.Relations) {
@@ -100,11 +143,8 @@ func sortDatesInLocations(relations *models.Relations) {
 		if len(dates) <= 1 {
 			continue
 		}
-		// sorting the slice referenced by the map entry; the slice header is copied
-		// but refers to the same backing array, so modifications are visible in the map.
-		sort.Slice(dates, func(i, j int) bool {
-			return parseDate(dates[i]).After(parseDate(dates[j]))
-		})
+		// Use centralized comparison helper to avoid repeating parse/err handling here.
+		sort.SliceStable(dates, func(i, j int) bool { return dateNewer(dates[i], dates[j]) })
 		relations.DatesLocations[loc] = dates
 	}
 }
@@ -120,13 +160,11 @@ func sortLocationsByDate(relations *models.Relations) {
 			locations = append(locations, loc)
 		}
 	}
-
 	// Sort locations by their most recent date (index 0)
 	sort.Slice(locations, func(i, j int) bool {
-		dateI := parseDate(relations.DatesLocations[locations[i]][0])
-		dateJ := parseDate(relations.DatesLocations[locations[j]][0])
+		dateI, _ := parseDate(relations.DatesLocations[locations[i]][0])
+		dateJ, _ := parseDate(relations.DatesLocations[locations[j]][0])
 		return dateI.After(dateJ)
 	})
-
 	relations.SortedLocations = locations
 }
