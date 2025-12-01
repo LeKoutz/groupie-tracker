@@ -8,10 +8,8 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // Parse templates once before server startup
@@ -21,78 +19,6 @@ var (
 	error_tmpl   = template.Must(template.ParseFiles("templates/error.html"))
 	loading_tmpl = template.Must(template.ParseFiles("templates/loading.html"))
 )
-
-type DateLocation struct {
-	Date            string
-	Location        string
-	LocationDisplay string
-}
-
-func formatLocationDisplay(raw string) string {
-	// split "city-country" on the first "-"
-	parts := strings.SplitN(raw, "-", 2)
-
-	cityRaw := parts[0]
-	countryRaw := ""
-	if len(parts) > 1 {
-		countryRaw = parts[1]
-	}
-
-	// replace "_" with spaces
-	city := strings.ReplaceAll(cityRaw, "_", " ")
-	country := strings.ReplaceAll(countryRaw, "_", " ")
-
-	// basic title case
-	city = strings.Title(city)
-	country = strings.Title(country)
-
-	// special cases for country
-	switch strings.ToLower(countryRaw) {
-	case "usa":
-		country = "USA"
-	case "uk":
-		country = "UK"
-	}
-
-	if country == "" {
-		return city
-	}
-	return city + ", " + country
-}
-
-func parseAPIDate(dateString string) time.Time {
-	// API format: "dd-mm-yyyy"
-	parsed, err := time.Parse("02-01-2006", dateString)
-	if err != nil {
-		return time.Time{} // zero value if something is wrong
-	}
-	return parsed
-}
-
-func BuildDateLocations(datesLocations map[string][]string) []DateLocation {
-	result := make([]DateLocation, 0)
-
-	for location, dates := range datesLocations {
-		for _, date := range dates {
-			result = append(result, DateLocation{
-				Date:            date,
-				Location:        location,
-				LocationDisplay: formatLocationDisplay(location),
-			})
-		}
-	}
-
-	// sort newest → oldest
-	sort.Slice(result, func(i, j int) bool {
-		di := parseAPIDate(result[i].Date)
-		dj := parseAPIDate(result[j].Date)
-
-		// newer date should come first
-		return di.After(dj)
-	})
-
-	return result
-}
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
@@ -127,7 +53,6 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "This request method is not supported for the requested resource. Use GET request instead.")
 		return
 	}
-
 	artist_ID, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/artist/"))
 
 	artist, err := services.GetArtistByID(artist_ID)
@@ -150,31 +75,18 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		HandleErrors(w, http.StatusNotFound, http.StatusText(http.StatusNotFound), err.Error())
 		return
 	}
-
-	artistDetails := models.ArtistDetails{
-		Artist:    *artist,
-		Locations: *locations,
-		Dates:     *dates,
-		Relations: *relations,
-	}
-
-	dateLocations := BuildDateLocations(artistDetails.Relations.DatesLocations)
-
 	data := struct {
 		ArtistDetails models.ArtistDetails
-		DateLocations []DateLocation
 	}{
-		ArtistDetails: artistDetails,
-		DateLocations: dateLocations,
+		ArtistDetails: models.ArtistDetails{
+			Artist:    *artist,
+			Locations: *locations,
+			Dates:     *dates,
+			Relations: *relations,
+		},
 	}
-
 	if err := artist_tmpl.Execute(w, data); err != nil {
-		HandleErrors(
-			w,
-			http.StatusInternalServerError,
-			http.StatusText(http.StatusInternalServerError),
-			"The server was unable to complete your request. Please try again later",
-		)
+		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to complete your request. Please try again later")
 		return
 	}
 }
