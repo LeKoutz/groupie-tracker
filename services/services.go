@@ -48,8 +48,6 @@ func GetRelationsByID(id int) (*models.Relations, error) {
 	return nil, fmt.Errorf("Error: No relations found for ID %d", id)
 }
 
-const DateFormat = "02-01-2006" // dd-mm-yyyy
-
 // parseDate parses a date string in the format "dd-mm-yyyy" and returns a time.Time.
 // It accepts a few common separator variants and trims whitespace. On failure it
 // returns a non-nil error so callers can decide how to handle invalid dates.
@@ -60,17 +58,33 @@ func parseDate(dateStr string) (time.Time, error) {
 	}
 
 	// remove leading '*' markers that appear in the API and trim spaces
-	s = strings.TrimLeftFunc(s, func(r rune) bool { return r == '*' || unicode.IsSpace(r) })
+	s = strings.TrimLeftFunc(s, func(r rune) bool { 
+		return r == '*' || unicode.IsSpace(r) })
 
 	// normalize common separators to '-'
 	s = strings.ReplaceAll(s, "/", "-")
 	s = strings.ReplaceAll(s, ".", "-")
 
-	t, err := time.Parse(DateFormat, s)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("invalid date %q", dateStr)
+	// multiple date formats to try
+	DateFormats := []string {
+        "02-01-2006", // DD-MM-YYYY (current format)
+        "2006-01-02", // YYYY-MM-DD
+        "01-02-2006", // MM-DD-YYYY
+        "02.01.2006", // DD.MM.YYYY
+        "2006.01.02", // YYYY.MM.DD
+        "02/01/2006", // DD/MM/YYYY
+        "2006/01/02", // YYYY/MM/DD
 	}
-	return t, nil
+
+	for _, format := range DateFormats { 
+		t, err := time.Parse(format, s) 
+		if err == nil { 
+			return t, nil
+		}
+	}
+
+	// if all formats fail, return an error
+	return time.Time{}, fmt.Errorf("invalid date format: %s", dateStr)
 }
 
 // titleCase converts a string into Title Case for each word while trimming
@@ -80,16 +94,16 @@ func titleCase(s string) string {
 	if s == "" {
 		return ""
 	}
-	words := strings.Fields(strings.ToLower(s))
-	for i, w := range words {
-		runes := []rune(w)
-		if len(runes) == 0 {
+	words := strings.Fields(strings.ToLower(s)) // split and lower-case
+	for i, w := range words { 
+		runes := []rune(w) // convert to rune slice for proper capitalization
+		if len(runes) == 0 { 
 			continue
 		}
-		runes[0] = unicode.ToUpper(runes[0])
-		words[i] = string(runes)
+		runes[0] = unicode.ToUpper(runes[0]) // capitalize first letter
+		words[i] = string(runes) // reconstruct the word
 	}
-	return strings.Join(words, " ")
+	return strings.Join(words, " ") 
 }
 
 // formatLocationName converts "city-country" into "City, Country".
@@ -100,10 +114,17 @@ func formatLocationName(loc string) string {
 	// "san, juan, puerto, rico". If there's no hyphen, title-case the whole
 	// string.
 	if idx := strings.LastIndex(loc, "-"); idx != -1 {
-		left := strings.ReplaceAll(loc[:idx], "-", " ")
-		right := strings.ReplaceAll(loc[idx+1:], "-", " ")
-		left = titleCase(left)
-		right = titleCase(right)
+		left := strings.ReplaceAll(loc[:idx], "-", " ") // replace any extra hyphens in city name
+		right := strings.ReplaceAll(loc[idx+1:], "-", " ") // replace any extra hyphens in country name
+		left = titleCase(left) // title-case city
+		right = titleCase(right) // title-case country
+		// special cases
+		if right == "Usa" {
+			right = "USA"
+		}
+		if right == "Uk" {
+			right = "UK"
+		}
 		return strings.TrimSpace(left) + ", " + strings.TrimSpace(right)
 	}
 	return titleCase(loc)
@@ -128,9 +149,9 @@ func ProcessRelations(relations *models.Relations) {
 // dateNewer returns true if dateA is newer (later) than dateB.
 // It returns false if either date cannot be parsed (treating unparseable dates as older).
 func dateNewer(dateA, dateB string) bool {
-	a, errA := parseDate(dateA)
+	a, errA := parseDate(dateA) 
 	b, errB := parseDate(dateB)
-	if errA != nil || errB != nil {
+	if errA != nil || errB != nil { // treat unparseable dates as older
 		return errA == nil
 	}
 	return a.After(b)
@@ -144,7 +165,8 @@ func sortDatesInLocations(relations *models.Relations) {
 			continue
 		}
 		// Use centralized comparison helper to avoid repeating parse/err handling here.
-		sort.SliceStable(dates, func(i, j int) bool { return dateNewer(dates[i], dates[j]) })
+		sort.SliceStable(dates, func(i, j int) bool { 
+			return dateNewer(dates[i], dates[j]) })
 		relations.DatesLocations[loc] = dates
 	}
 }
@@ -157,7 +179,7 @@ func sortLocationsByDate(relations *models.Relations) {
 	locations := make([]string, 0, len(relations.DatesLocations))
 	for loc, dates := range relations.DatesLocations {
 		if len(dates) > 0 {
-			locations = append(locations, loc)
+			locations = append(locations, loc) // only include locations with dates
 		}
 	}
 	// Sort locations by their most recent date (index 0)
