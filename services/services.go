@@ -105,6 +105,10 @@ func titleCase(s string) string {
 
 // formatLocationName converts "city-country" into "City, Country".
 func formatLocationName(loc string) string {
+	if strings.Contains(loc, ",") {
+		// handle already formatted strings
+		return loc
+	}
 	loc = strings.ReplaceAll(loc, "_", " ")
 	// Split by the last hyphen so values like "san-juan-puerto-rico" are
 	// interpreted sensibly as "san-juan, puerto-rico" rather than
