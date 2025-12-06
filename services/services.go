@@ -70,10 +70,7 @@ func parseDate(dateStr string) (time.Time, error) {
         "02-01-2006", // DD-MM-YYYY (current format)
         "2006-01-02", // YYYY-MM-DD
         "01-02-2006", // MM-DD-YYYY
-        "02.01.2006", // DD.MM.YYYY
-        "2006.01.02", // YYYY.MM.DD
-        "02/01/2006", // DD/MM/YYYY
-        "2006/01/02", // YYYY/MM/DD
+		"2006-02-01", // YYYY-DD-MM
 	}
 
 	for _, format := range DateFormats { 
