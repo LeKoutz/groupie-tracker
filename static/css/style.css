@@ -1,4 +1,8 @@
-/* 1. GLOBAL STYLES & MAIN LAYOUT */
+/* ========================================
+   GENERAL STYLES
+   ======================================== */
+
+/* FONTS */
 @font-face {
     font-family: 'HeaderFont';
     src: url('/static/fonts/Lovira.ttf') format('truetype');
@@ -13,26 +17,31 @@
     font-style: normal;
 }
 
+/* FONT SMOOTHING */
 body, h1, h2, h3, p, a {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* HTML */
 html {
     overflow-y: scroll;
 }
 
+/* BODY */
 body {
     font-family: 'QuestrialLocal', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #20232A;
-    color: #fff;
+    background: linear-gradient(145deg, #1c1f28, #252836);
+    color: #e0e0e0;
     width: 100%;
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background 0.3s ease;
 }
 
+/* MAIN */
 main {
     width: 100%;
     margin: 0;
@@ -40,180 +49,70 @@ main {
     flex: 1;
 }
 
-/* GLOBAL LINK STYLES */
+/* LINKS */
 a {
     color: #97CE4C;
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
 }
-
 a:hover {
     color: #b7ff7e;
+    text-shadow: 0 0 8px #97CE4C;
 }
 
-/* HEADER STYLES */
+.inline-info {
+  display: inline;
+  margin-left: 6px;
+}
+
+
+/* ========================================
+   HEADER & FOOTER
+   ======================================== */
+
+   /* HEADER */
 header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 100;
-    background-color: #141b23;
+    background: rgba(20, 27, 35, 0.85);
+    backdrop-filter: blur(5px);
     color: white;
     padding: 15px 0;
     text-align: center;
     border-bottom: 1px solid #97CE4C;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
+/* HEADER TITLE */
 header h1 {
     margin: 0 auto;
     font-size: 2.5em;
     color: #97CE4C;
     display: inline-block;
     font-family: 'HeaderFont', sans-serif;
-    text-shadow: 0 0 8px rgba(151, 206, 76, 0.9);
-    animation: neonFlickerSteady 5s infinite;  
+    text-shadow: 0 0 12px rgba(151, 206, 76, 0.9), 0 0 20px rgba(151, 206, 76, 0.6);
+    animation: neonFlickerSteady 5s infinite;
 }
 
+/* HEADER ANIMATION */
 @keyframes neonFlickerSteady {
-    /* ---- steady glow ---- */
-    0%, 15%, 25%, 45%, 55%, 75%, 100% {
-        text-shadow: 0 0 8px rgba(151, 206, 76, 0.9);
-    }
-
-    /* ---- quick flickers ---- */
-    16% {
-        text-shadow: 0 0 2px rgba(151, 206, 76, 0.4);
-    }
-    17.5% {
-        text-shadow: 0 0 10px rgba(151, 206, 76, 1);
-    }
-
-    46% {
-        text-shadow: 0 0 3px rgba(151, 206, 76, 0.25);
-    }
-    47.2% {
-        text-shadow: 0 0 10px rgba(151, 206, 76, 1);
-    }
-
-    /* smaller micro-flicker */
-    56% {
-        text-shadow: 0 0 4px rgba(151, 206, 76, 0.5);
-    }
-    57% {
-        text-shadow: 0 0 9px rgba(151, 206, 76, 1);
-    }
+    0%, 15%, 25%, 45%, 55%, 75%, 100% { text-shadow: 0 0 12px rgba(151, 206, 76, 0.9), 0 0 20px rgba(151, 206, 76, 0.6); }
+    16% { text-shadow: 0 0 4px rgba(151, 206, 76, 0.4); }
+    17.5% { text-shadow: 0 0 14px rgba(151, 206, 76, 1); }
+    46% { text-shadow: 0 0 6px rgba(151, 206, 76, 0.25); }
+    47.2% { text-shadow: 0 0 14px rgba(151, 206, 76, 1); }
+    56% { text-shadow: 0 0 6px rgba(151, 206, 76, 0.5); }
+    57% { text-shadow: 0 0 14px rgba(151, 206, 76, 1); }
 }
 
+/* HEADER NAV */
 header nav a {
     text-decoration: none;
     margin: 0 15px;
     font-weight: bold;
-}
-
-/* MAIN AREA */
-.artist-main {
-    background-color: #20232A;
-    padding: 30px 20px;
-    flex: 1;
-    margin-top: 80px;       /* space for fixed header */
-    margin-bottom: 0px;    /* space for fixed footer */
-    padding-bottom: 80px;   /* space for fixed footer */
-    overflow-y: auto;       /* scroll only here */
-}
-
-/* ARTIST GRID LAYOUT */
-.artist-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 30px;
-    padding: 20px;
-    box-sizing: border-box;
-}
-
-/* ARTIST CARD STYLES */
-.artist-card {
-    display: flex;
-    width: 400px;
-    height: 165px;
-    background-color: #3C3E44;
-    color: white;
-    border: 1px solid #97CE4C;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-    transition: transform 0.3s;
-    will-change: transform;
-    box-sizing: border-box;
-}
-
-.artist-card:hover {
-    transform: translateY(-5px);
-}
-
-/* CARD IMAGE */
-.card-image {
-    flex: 1;
-    position: relative;
-}
-
-.card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* CARD CONTENT */
-.card-content {
-    flex: 1.2;
-    padding: 8px 12px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.card-content h3 {
-    margin: 0;
-    font-size: 1.2em;
-    font-weight: 600;
-    color: #f7f7f7;
-}
-
-.band-info h3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;    /* max 2 lines */
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    font-size: 1.1em;         /* slightly smaller so it fits better */
-    line-height: 1.2em;
-    max-height: 2.4em;        /* 2 lines * line height */
-}
-
-.tour-details p {
-    margin: 2px 0;
-    font-size: 0.95em;
-    color: #e5e5e5;
-}
-
-/* GREEN BUTTON */
-.green-button {
-    display: inline-block;
-    margin-top: 6px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #97CE4C;
-    color: #97CE4C;
-    background-color: #141b23;
-    text-decoration: none;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    font-size: 0.85em;
-}
-
-.green-button:hover {
-    background-color: #97CE4C;
-    color: #20232A;
 }
 
 /* FOOTER */
@@ -224,133 +123,271 @@ footer {
     right: 0;
     padding: 20px 0;
     text-align: center;
-    background-color: #141b23;
+    background: rgba(20, 27, 35, 0.85);
+    backdrop-filter: blur(5px);
     color: #97CE4C;
     border-top: 1px solid #97CE4C;
 }
-
 footer p {
     margin: 0;
     font-size: 0.9em;
 }
 
+header, footer {
+    padding-left: 20px;
+    padding-right: 20px;
+}
 
-/* ARTIST DETAIL PAGE */
 
-.artist-detail-wrapper {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
+/* ========================================
+   HOME PAGE
+   ======================================== */
+
+/* ARTIST MAIN */
+.artist-main {
+    padding: 30px 20px;
+    margin-top: 80px;
+    padding-bottom: 80px;
+    display: flex;
+    justify-content: center;
     box-sizing: border-box;
 }
 
-/* Back button */
-.back-button {
-    display: inline-block;
-    margin-bottom: 16px;
-    padding: 6px 12px;
-    border-radius: 4px;
-    border: 1px solid #97CE4C;
-    color: #97CE4C;
-    background-color: #141b23;
-    text-decoration: none;
-    font-size: 0.9em;
-    transition: background-color 0.2s ease, color 0.2s ease;
+.artist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    max-width: 1800px;
+    box-sizing: border-box;
 }
 
+/* ARTIST CARD */
+.artist-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(60, 62, 68, 0.85);
+    border: 0px solid #97CE4C;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    backdrop-filter: blur(4px);
+}
+
+/* HOVER EFFECT */
+.artist-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 25px rgba(151, 206, 76, 0.6);
+}
+
+/* REMOVE CARD SHADOW WHEN BUTTON HOVERED */
+.artist-card:has(.green-button:hover) {
+    box-shadow: none;
+}
+
+/* BUTTON HOVER EFFECT */
+.green-button:hover {
+    background-color: #97CE4C;
+    color: #20232A;
+    box-shadow: 0 0 10px #97CE4C, 0 0 20px #97CE4C;
+}
+
+
+/* CARD IMAGE */
+.card-image {
+    width: 100%;
+    aspect-ratio: 1/1;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+}
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display:block;
+}
+
+/* CARD CONTENT */
+.card-content {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* BAND INFO */
+.band-info h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #f7f7f7;
+    letter-spacing: 0.5px;
+}
+
+/* CARD INFO */
+.card-info p {
+    margin: 4px 0;
+    font-size: 0.95em;
+    color: #e5e5e5;
+}
+
+/* GREEN BUTTON */
+.green-button {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #97CE4C;
+    color: #97CE4C;
+    background-color: rgba(20, 27, 35, 0.8);
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+.green-button:hover {
+    background-color: #97CE4C;
+    color: #20232A;
+    box-shadow: 0 0 10px #97CE4C, 0 0 20px #97CE4C;
+}
+
+/* ========================================
+   ARTIST PAGE
+   ======================================== */
+
+/* WRAPPER */
+.artist-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    box-sizing: border-box;
+}
+
+/* BACK BUTTON */
+.back-button {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #97CE4C;
+    color: #97CE4C;
+    background-color: rgba(20, 27, 35, 0.8);
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
 .back-button:hover {
     background-color: #97CE4C;
     color: #20232A;
+    box-shadow: 0 0 10px #97CE4C, 0 0 20px #97CE4C;
 }
 
-/* 3 columns that flow naturally */
-.artist-detail-layout {
+/* ARTIST LAYOUT */
+.artist-layout {
     display: flex;
-    gap: 24px;
+    gap: 30px;
     align-items: flex-start;
 }
 
-/* IMAGE COLUMN */
-.artist-detail-image {
-    flex: 0 0 260px;
+/* IMAGE */
+.artist-image {
+    flex: 0 0 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
 }
-
-.artist-detail-image img {
+.artist-image img {
     width: 100%;
     height: auto;
     display: block;
-    border-radius: 8px;
+
 }
 
-/* INFO COLUMN */
-.artist-detail-info {
-    flex: 1;
+/*
+.artist-image:hover {
+    box-shadow: 0 12px 25px rgba(151, 206, 76, 0.6);
 }
+*/
 
-.artist-detail-info h2 {
+.artist-info-text .artist-labels:first-of-type {
     margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1.8em;
-    color: #f7f7f7;
 }
 
-.artist-detail-info p,
-.artist-detail-info li {
-    margin: 6px 0;
+/* INFO TEXT */
+.artist-info-text {
+    flex: 1 1 400px;
+}
+
+/* BAND NAME */
+.artist-info-text h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 2em;
+    color: #f7f7f7;
+    letter-spacing: 1px;
+    white-space:nowrap;
+}
+
+/* MEMBERS / INFO LIST */
+.artist-info-text p,
+.artist-info-text li {
     font-size: 0.95em;
-    font-weight: 400;
     color: #f7f7f7;
+    margin: 5px 0;
+    white-space: nowrap;
 }
 
-.artist-detail-info ul {
+/* FOUNDED / FIRST ALBUM */
+.artist-info-text p {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 30px;
+}
+
+.artist-info-text ul {
     list-style: disc;
     padding-left: 20px;
-    margin: 4px 0 12px 0;
 }
 
-/* DATES COLUMN */
-.artist-detail-dates {
-    flex: 1;
-}
-
-/* unified label style */
-.artist-detail-label,
-.artist-detail-dates h3 {
+/* LABELS */
+.artist-labels {
     color: #97CE4C;
     font-weight: 600;
-    font-size: 0.95em;
+    font-size: 1em;
+    margin-top: 16px;
+    margin-right: 2px;
+    display: inline-block;
 }
 
-/* keep this so strong labels dont get extra bold */
-strong.artist-detail-label {
-    font-weight: 600;
-}
-
-/* unified normal text style */
-.artist-detail-dates li {
-    font-size: 0.95em;
-    font-weight: 400;
+/* TOUR DATES + LOCATIONS */
+.artist-date-loca {
     color: #f7f7f7;
+    font-weight: 400;
+    font-size: 0.95em;
+    flex: 1 1 400px;
+    margin-top: 32px;
 }
 
-/* bullet points like members */
-.artist-detail-dates ul {
+.artist-date-loca ul {
     list-style: disc;
     padding-left: 20px;
-    margin: 0 0 12px 0;
 }
 
-.artist-detail-dates strong {
-    color: #f7f7f7;
+.artist-date-loca li {
+    white-space: nowrap;
+    margin-bottom: 5px;
 }
 
-/* stack on smaller screens */
+/* MEDIA QUERY */
 @media (max-width: 900px) {
-    .artist-detail-layout {
+    .artist-layout {
         flex-direction: column;
     }
-
-    .artist-detail-image {
+    .artist-image {
         max-width: 320px;
+    }
+    .artist-card {
+        height: auto;
     }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Groupie Tracker: {{.ArtistDetails.Artist.Name}}</title>
+    <title>Groupie Tracker: {{ .Artist.Name }}</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -16,84 +16,57 @@
 
 <main class="artist-main">
 
-    <section class="artist-detail-wrapper">
+    <section class="artist-wrapper">
 
         <a href="/" class="back-button">← Back</a>
 
-        <div class="artist-detail-layout">
+        <div class="artist-layout">
 
-            <!-- IMAGE CARD -->
-            <div class="artist-detail-image">
-                <img src="{{.ArtistDetails.Artist.Image}}" alt="{{.ArtistDetails.Artist.Name}}">
+            <!-- IMAGE COLUMN -->
+            <div class="artist-image">
+                <img src="{{ .Artist.Image }}" alt="{{ .Artist.Name }}">
             </div>
 
-            <!-- INFO CARD -->
-            <div class="artist-detail-info">
-                <h2>{{.ArtistDetails.Artist.Name}}</h2>
+            <!-- INFO COLUMN -->
+            <div class="artist-info-text">
+                <h2>{{ .Artist.Name }}</h2>
 
                 <p>
-                    <strong class="artist-detail-label">
-                        Members ({{len .ArtistDetails.Artist.Members}})
-                    </strong>
+                    <span class="artist-labels">
+                        Members ({{ len .Artist.Members }}):
+                    </span>
                 </p>
                 <ul>
-                    {{range .ArtistDetails.Artist.Members}}
-                        <li>{{.}}</li>
-                    {{end}}
+                    {{ range .Artist.Members }}
+                        <li>{{ . }}</li>
+                    {{ end }}
                 </ul>
 
                 <p>
-                    <span class="artist-detail-label">Founded:</span>
-                    {{.ArtistDetails.Artist.CreationDate}}
+                    <span class="artist-labels">Founded:</span> <span class="inline-info">{{ .Artist.CreationDate }}</span>
                 </p>
                 <p>
-                    <span class="artist-detail-label">First Release:</span>
-                    {{.ArtistDetails.Artist.FirstAlbum}}
+                    <span class="artist-labels">First Release:</span> <span class="inline-info">{{ .Artist.FirstAlbum }}</span>
                 </p>
+
             </div>
 
-            <!-- TOUR DATES CARD -->
-            <div class="artist-detail-dates">
-                {{$dates := .ArtistDetails.Dates.ConcertDates}}
-                {{$map := .ArtistDetails.Relations.DatesLocations}}
+            <!-- TOUR DATES COLUMN -->
+            <div class="artist-date-loca">
 
-                {{if gt (len $dates) 0}}
-                    <!-- MOST RECENT -->
-                    <h3>Most Recent Tour Date</h3>
-                    <ul>
-                        <li>
-                            {{/* first date in the slice */}}
-                            {{$d := index $dates 0}}
-                            {{$d}}
-                            {{with index $map $d}}
-                                {{range .}}
-                                    <div>{{.}}</div>
-                                {{end}}
-                            {{end}}
-                        </li>
-                    </ul>
+                <p>
+                    <span class="artist-labels">Tour Dates:</span>
+                </p>
 
-                    {{if gt (len $dates) 1}}
-                        <!-- PAST DATES -->
-                        <h3>Past Tour Dates</h3>
-                        <ul>
-                            {{range $i, $d := $dates}}
-                                {{if ne $i 0}}
-                                    <li>
-                                        {{$d}}
-                                        {{with index $map $d}}
-                                            {{range .}}
-                                                <div>{{.}}</div>
-                                            {{end}}
-                                        {{end}}
-                                    </li>
-                                {{end}}
-                            {{end}}
-                        </ul>
-                    {{end}}
-                {{else}}
-                    <p>No tour dates available.</p>
-                {{end}}
+                <ul>
+                    {{ range .Relations.SortedLocations }}
+                        {{ $loc := . }}
+                        {{ range index $.Relations.DatesLocations $loc }}
+                            <li>{{ . }}&nbsp;&nbsp;<b>{{ $loc }}</b></li>
+                        {{ end }}
+                    {{ end }}
+                </ul>
+
             </div>
 
         </div>
@@ -103,7 +76,7 @@
 </main>
 
 <footer>
-    <p>&copy; 2025 Groupie Tracker by cktistak, gkoutzos, ttsopani</p>
+    <p>&copy; 2025 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
 </footer>
 
 </body>
