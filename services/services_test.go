@@ -102,4 +102,18 @@ func TestParseDate(t *testing.T) {
 	}
 }
 
+func TestTitleCase(t *testing.T) {
+	tests := map[string]string{
+		"hello world": "Hello World",
+		"HELLO":       "Hello",
+		"":            "",
+		"  spaces  ":  "Spaces",
+	}
+	for in, want := range tests {
+		if got := titleCase(in); got != want {
+			t.Errorf("titleCase(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 
