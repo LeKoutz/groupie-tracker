@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"groupie-tracker/models"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
-	"reflect"
-	"groupie-tracker/models"
+	"time"
 )
 
 // NOTE ABOUT TEST EXECUTION AND GLOBAL STATE
@@ -32,73 +33,72 @@ func wrapFetchFunc[T any](fetchFunc func(context.Context) (T, error)) func(conte
 // helper functions to validate data structures
 // validateArtist validates a single artist's fields
 func validateArtist(t *testing.T, artist models.Artists) {
-    t.Helper() // Marks this as a test helper function
+	t.Helper() // Marks this as a test helper function
 
-    if artist.ID <= 0 {
-        t.Errorf("Artist ID should be positive, got %d", artist.ID)
-    }
-    if artist.Name == "" {
-        t.Error("Artist Name should not be empty")
-    }
-    if len(artist.Members) == 0 {
-        t.Error("Artist Members should not be empty")
-    }
-    if artist.CreationDate <= 0 {
-        t.Errorf("Artist CreationDate should be positive, got %d", artist.CreationDate)
-    }
-    if artist.FirstAlbum == "" {
-        t.Error("Artist FirstAlbum should not be empty")
-    }
-    if artist.Locations == "" {
-        t.Error("Artist Locations should not be empty")
-    }
-    if artist.ConcertDates == "" {
-        t.Error("Artist ConcertDates should not be empty")
-    }
-    if artist.Relations == "" {
-        t.Error("Artist Relations should not be empty")
-    }
+	if artist.ID <= 0 {
+		t.Errorf("Artist ID should be positive, got %d", artist.ID)
+	}
+	if artist.Name == "" {
+		t.Error("Artist Name should not be empty")
+	}
+	if len(artist.Members) == 0 {
+		t.Error("Artist Members should not be empty")
+	}
+	if artist.CreationDate <= 0 {
+		t.Errorf("Artist CreationDate should be positive, got %d", artist.CreationDate)
+	}
+	if artist.FirstAlbum == "" {
+		t.Error("Artist FirstAlbum should not be empty")
+	}
+	if artist.Locations == "" {
+		t.Error("Artist Locations should not be empty")
+	}
+	if artist.ConcertDates == "" {
+		t.Error("Artist ConcertDates should not be empty")
+	}
+	if artist.Relations == "" {
+		t.Error("Artist Relations should not be empty")
+	}
 }
 
 // validateLocation validates a single location's fields
 func validateLocation(t *testing.T, loc models.Locations) {
-    t.Helper()
+	t.Helper()
 
-    if loc.ID <= 0 {
-        t.Errorf("Location ID should be positive, got %d", loc.ID)
-    }
-    if len(loc.Locations) == 0 {
-        t.Error("Location Locations should not be empty")
-    }
-    if loc.Dates == "" {
-        t.Error("Location Dates should not be empty")
-    }
+	if loc.ID <= 0 {
+		t.Errorf("Location ID should be positive, got %d", loc.ID)
+	}
+	if len(loc.Locations) == 0 {
+		t.Error("Location Locations should not be empty")
+	}
+	if loc.Dates == "" {
+		t.Error("Location Dates should not be empty")
+	}
 }
 
 // validateDate validates a single date's fields
 func validateDate(t *testing.T, date models.Dates) {
-    t.Helper()
+	t.Helper()
 
-    if date.ID <= 0 {
-        t.Errorf("Date ID should be positive, got %d", date.ID)
-    }
-    if len(date.ConcertDates) == 0 {
-        t.Error("Date ConcertDates should not be empty")
-    }
+	if date.ID <= 0 {
+		t.Errorf("Date ID should be positive, got %d", date.ID)
+	}
+	if len(date.ConcertDates) == 0 {
+		t.Error("Date ConcertDates should not be empty")
+	}
 }
 
 // validateRelation validates a single relation's fields
 func validateRelation(t *testing.T, rel models.Relations) {
-    t.Helper()
+	t.Helper()
 
-    if rel.ID <= 0 {
-        t.Errorf("Relation ID should be positive, got %d", rel.ID)
-    }
-    if len(rel.DatesLocations) == 0 {
-        t.Error("Relation DatesLocations should not be empty")
-    }
+	if rel.ID <= 0 {
+		t.Errorf("Relation ID should be positive, got %d", rel.ID)
+	}
+	if len(rel.DatesLocations) == 0 {
+		t.Error("Relation DatesLocations should not be empty")
+	}
 }
-
 
 // Table-driven test for network errors across all endpoints
 func TestAllEndpoints_NetworkErrors(t *testing.T) {
@@ -115,7 +115,7 @@ func TestAllEndpoints_NetworkErrors(t *testing.T) {
 		{"dates", "/api/dates", wrapFetchFunc(FetchDatesWithContext), true},
 		{"relations", "/api/relation", wrapFetchFunc(FetchRelationsWithContext), true},
 	}
-	
+
 	for _, tt := range endpoints {
 		t.Run(tt.name, func(t *testing.T) {
 			restore := setMockTransport(errorTransport(map[string]error{
@@ -200,8 +200,8 @@ func TestAllEndpoints_JSONDecodeErrors(t *testing.T) {
 
 func TestAllEndpoints_DataValidation(t *testing.T) {
 	type validationTest struct {
-		name       string
-		fetchFunc  func(context.Context) (any, error)
+		name         string
+		fetchFunc    func(context.Context) (any, error)
 		validateFunc func(t *testing.T, item any)
 	}
 
@@ -490,6 +490,116 @@ func TestLoadingStatusAccessors(t *testing.T) {
 	if s.IsLoading || s.IsLoaded || !s.HasFailed {
 		t.Errorf("unexpected status after third set: %+v", s)
 	}
+}
+
+/*
+TestRefreshData tests the automatic data refresh functionality.
+It verifies that RefreshData correctly handles different loading states
+and refreshes data at appropriate intervals.
+*/
+func TestRefreshData(t *testing.T) {
+	// Save original state
+	originalArtists := All_Artists
+	originalLocations := All_Locations
+	originalDates := All_Dates
+	originalRelations := All_Relations
+	originalTransport := http.DefaultClient.Transport
+
+	// Restore function
+	defer func() {
+		All_Artists = originalArtists
+		All_Locations = originalLocations
+		All_Dates = originalDates
+		All_Relations = originalRelations
+		http.DefaultClient.Transport = originalTransport
+	}()
+
+	// Test 1: Verify RefreshData doesn't run when already loading
+	t.Run("NoRefreshWhenLoading", func(t *testing.T) {
+		// Set loading state
+		SetLoadingStatus(true, false, false)
+
+		// Use a channel to signal when RefreshData would start
+		refreshStarted := make(chan bool, 1)
+		go func() {
+			RefreshData()
+			refreshStarted <- true
+		}()
+
+		// Wait a short time to see if RefreshData starts
+		select {
+		case <-refreshStarted:
+			t.Error("RefreshData should not start when already loading")
+		case <-time.After(100 * time.Millisecond):
+			// Expected: RefreshData should be waiting
+		}
+
+		// Clean up
+		SetLoadingStatus(false, false, false)
+	})
+
+	// Test 2: Verify RefreshData runs when data is loaded
+	t.Run("RefreshWhenLoaded", func(t *testing.T) {
+		reset, restore := setupInitializeDataTest()
+		defer restore()
+		reset()
+
+		// Set up successful data loading
+		restoreTransport := setMockTransport(successTransport())
+		defer restoreTransport()
+
+		// Load initial data
+		err := InitializeData()
+		if err != nil {
+			t.Fatalf("Failed to initialize data: %v", err)
+		}
+
+		// Set loaded state
+		SetLoadingStatus(false, true, false)
+
+		// Test that RefreshData runs without crashing when data is loaded
+		// Since RefreshData sleeps for 24 hours before refreshing when loaded,
+		// we just verify it doesn't crash and maintains proper state
+		go RefreshData()
+
+		// Wait a short time to ensure the goroutine is running
+		time.Sleep(100 * time.Millisecond)
+
+		// Verify the RefreshData is running (should not crash)
+		// The actual refresh will happen after 24 hours, which we can't test in a unit test
+		status := GetLoadingStatus()
+		if status.IsLoading {
+			t.Error("RefreshData should not set loading state immediately when data is loaded")
+		}
+		if !status.IsLoaded {
+			t.Error("RefreshData should maintain loaded state when data is loaded")
+		}
+	})
+
+	// Test 3: Verify RefreshData retries when failed
+	t.Run("RetryWhenFailed", func(t *testing.T) {
+		reset, restore := setupInitializeDataTest()
+		defer restore()
+		reset()
+
+		// Set failed state
+		SetLoadingStatus(false, false, true)
+
+		// Use a transport that always fails
+		http.DefaultClient.Transport = failAllTransport()
+
+		// Run RefreshData in a goroutine
+		go RefreshData()
+
+		// Wait for the initial sleep and retry to happen (1 second sleep + processing time)
+		time.Sleep(1500 * time.Millisecond)
+
+		// Verify it's still trying (should be in loading state)
+		status := GetLoadingStatus()
+		if !status.IsLoading {
+			t.Error("Expected RefreshData to set loading state when retrying")
+		}
+	})
 }
 
 // ---- Test helpers ----
