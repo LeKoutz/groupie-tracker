@@ -43,3 +43,36 @@ func TestGetLocationsByID(t *testing.T) {
 		t.Error("GetLocationsByID(999) should return error")
 	}
 }
+
+func TestGetDatesByID(t *testing.T) {
+	defer setupTestData()()
+	api.All_Dates = []models.Dates{{ID: 1, ConcertDates: []string{"2023-01-01"}}}
+
+	if dates, err := GetDatesByID(1); err != nil || dates.ID != 1 {
+		t.Errorf("GetDatesByID(1) failed: %v, %v", dates, err)
+	}
+	if _, err := GetDatesByID(999); err == nil {
+		t.Error("GetDatesByID(999) should return error")
+	}
+}
+
+func TestGetRelationsByID(t *testing.T) {
+	defer setupTestData()()
+	api.All_Relations = []models.Relations{
+		{ID: 1, DatesLocations: map[string][]string{"paris-france": {"01-01-2020"}}},
+	}
+
+	rel, err := GetRelationsByID(1)
+	if err != nil || rel.ID != 1 {
+		t.Errorf("GetRelationsByID(1) failed: %v, %v", rel, err)
+	}
+	// Verify ProcessRelations was called (location formatted)
+	if _, exists := rel.DatesLocations["paris-france"]; exists {
+		t.Error("Location should be formatted after GetRelationsByID")
+	}
+	if _, err := GetRelationsByID(999); err == nil {
+		t.Error("GetRelationsByID(999) should return error")
+	}
+}
+
+
