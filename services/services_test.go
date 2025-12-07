@@ -216,3 +216,33 @@ func TestFormatLocationNameAlreadyFormatted(t *testing.T) {
         t.Errorf("Already formatted string should be returned as-is, got %q", result)
     }
 }
+
+
+func TestProcessRelations(t *testing.T) {
+	r := &models.Relations{
+		DatesLocations: map[string][]string{
+			"new-york-usa": {"01-01-2020", "15-06-2021"},
+			"paris-france": {"03-03-2022", "01-01-2019"},
+		},
+	}
+
+	ProcessRelations(r)
+
+	// Check formatting
+	if _, exists := r.DatesLocations["New York, USA"]; !exists {
+		t.Error("Locations should be formatted")
+	}
+
+	// Check date sorting (newest first)
+	nydates := r.DatesLocations["New York, USA"]
+	if nydates[0] != "15-06-2021" {
+		t.Errorf("Dates not sorted, got %v", nydates)
+	}
+
+	// Check location sorting (Paris has newest date: 2022)
+	if len(r.SortedLocations) == 0 {
+		t.Error("SortedLocations should not be empty")
+	} else if r.SortedLocations[0] != "Paris, France" {
+		t.Errorf("Expected Paris first, got %s", r.SortedLocations[0])
+	}
+}
