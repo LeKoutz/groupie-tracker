@@ -189,3 +189,30 @@ func TestSortLocationsByDate(t *testing.T) {
 		t.Errorf("Expected Location B first (newest), got %s", r.SortedLocations[0])
 	}
 }
+
+func TestFormatLocations(t *testing.T) {
+	r := &models.Relations{
+		DatesLocations: map[string][]string{
+			"new-york-usa": {"01-01-2020"},
+			"paris-france": {"02-01-2020"},
+		},
+	}
+
+	formatLocations(r)
+
+	if _, exists := r.DatesLocations["new-york-usa"]; exists {
+		t.Error("Raw key should be replaced with formatted key")
+	}
+	if _, exists := r.DatesLocations["New York, USA"]; !exists {
+		t.Error("Formatted key should exist")
+	}
+}
+
+func TestFormatLocationNameAlreadyFormatted(t *testing.T) {
+    // Test that already formatted strings are not processed again
+    formatted := "New York, USA"
+    result := formatLocationName(formatted)
+    if result != formatted {
+        t.Errorf("Already formatted string should be returned as-is, got %q", result)
+    }
+}
