@@ -75,15 +75,11 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		HandleErrors(w, http.StatusNotFound, http.StatusText(http.StatusNotFound), err.Error())
 		return
 	}
-	data := struct {
-		ArtistDetails models.ArtistDetails
-	}{
-		ArtistDetails: models.ArtistDetails{
-			Artist:    *artist,
-			Locations: *locations,
-			Dates:     *dates,
-			Relations: *relations,
-		},
+	data := models.ArtistDetails{
+		Artist:    *artist,
+		Locations: *locations,
+		Dates:     *dates,
+		Relations: *relations,
 	}
 	if err := artist_tmpl.Execute(w, data); err != nil {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to complete your request. Please try again later")
