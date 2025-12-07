@@ -130,3 +130,20 @@ func TestFormatLocationName(t *testing.T) {
 		}
 	}
 }
+
+func TestDateNewer(t *testing.T) {
+	tests := []struct {
+		a, b string
+		want bool
+	}{
+		{"01-01-2021", "01-01-2020", true},
+		{"01-01-2020", "01-01-2021", false},
+		{"invalid", "01-01-2020", false},
+		{"01-01-2020", "invalid", true},
+	}
+	for _, tt := range tests {
+		if got := dateNewer(tt.a, tt.b); got != tt.want {
+			t.Errorf("dateNewer(%q, %q) = %v, want %v", tt.a, tt.b, got, tt.want)
+		}
+	}
+}
