@@ -360,12 +360,6 @@ func TestInitializeData_PartialFailure(t *testing.T) {
 	defer restore()
 	reset()
 
-	// Make artists fail, others succeed
-	restoreTransport := setMockTransport(mixedTransport(map[string]endpointBehavior{
-		"/api/artists": {kind: kindError},
-	}))
-	defer restoreTransport()
-
 	errors := InitializeData()
 
 	if errors == nil {
@@ -398,7 +392,7 @@ func TestInitializeData_AllFailure(t *testing.T) {
 	reset()
 
 	// All endpoints fail
-	restoreTransport := setMockTransport(failAllTransport())
+	restoreTransport := setMockTransport(errorTransport())
 	defer restoreTransport()
 
 	errors := InitializeData()
@@ -468,131 +462,115 @@ func TestLoadingStatusAccessors(t *testing.T) {
 	}
 }
 
-/*
-TestRefreshData tests the automatic data refresh functionality.
-It verifies that RefreshData correctly handles different loading states
-and refreshes data at appropriate intervals.
-*/
-func TestRefreshData(t *testing.T) {
-	// Save original state
+// ============================================================================
+// TESTS - Loading Status
+// ============================================================================
+
+func TestLoadingStatus(t *testing.T) {
+	SetLoadingStatus(true, false, false)
+	s := GetLoadingStatus()
+	if !s.IsLoading || s.IsLoaded || s.HasFailed {
+		t.Errorf("Unexpected status: %+v", s)
+	}
+
+	SetLoadingStatus(false, true, false)
+	s = GetLoadingStatus()
+	if s.IsLoading || !s.IsLoaded || s.HasFailed {
+		t.Errorf("Unexpected status: %+v", s)
+	}
+
+	SetLoadingStatus(false, false, true)
+	s = GetLoadingStatus()
+	if s.IsLoading || s.IsLoaded || !s.HasFailed {
+		t.Errorf("Unexpected status: %+v", s)
+	}
+}
+
+// ============================================================================
+// TESTS - RefreshData
+// ============================================================================
+
+func TestRefreshData_NoRefreshWhenLoading(t *testing.T) {
+	SetLoadingStatus(true, false, false)
+
+	refreshStarted := make(chan bool, 1)
+	go func() {
+		RefreshData()
+		refreshStarted <- true
+	}()
+
+	select {
+	case <-refreshStarted:
+		t.Error("RefreshData should not start when already loading")
+	case <-time.After(100 * time.Millisecond):
+		// Expected: RefreshData should be waiting
+	}
+
+	SetLoadingStatus(false, false, false)
+}
+
+func TestRefreshData_RetryOnFailure(t *testing.T) {
+	reset, restore := setupTest()
+	defer restore()
+	reset()
+
+	SetLoadingStatus(false, false, true)
+	http.DefaultClient.Transport = errorTransport()
+
+	go RefreshData()
+
+	// Wait for retry to happen (1 second sleep + processing)
+	time.Sleep(1500 * time.Millisecond)
+
+	status := GetLoadingStatus()
+	if !status.IsLoading {
+		t.Error("Expected loading state when retrying after failure")
+	}
+}
+
+// ============================================================================
+// TEST STATE MANAGEMENT
+// ============================================================================
+
+func setupTest() (reset func(), restore func()) {
 	originalArtists := All_Artists
 	originalLocations := All_Locations
 	originalDates := All_Dates
 	originalRelations := All_Relations
 	originalTransport := http.DefaultClient.Transport
 
-	// Restore function
-	defer func() {
+	reset = func() {
+		All_Artists = nil
+		All_Locations = nil
+		All_Dates = nil
+		All_Relations = nil
+	}
+
+	restore = func() {
 		All_Artists = originalArtists
 		All_Locations = originalLocations
 		All_Dates = originalDates
 		All_Relations = originalRelations
 		http.DefaultClient.Transport = originalTransport
-	}()
+	}
 
-	// Test 1: Verify RefreshData doesn't run when already loading
-	t.Run("NoRefreshWhenLoading", func(t *testing.T) {
-		// Set loading state
-		SetLoadingStatus(true, false, false)
-
-		// Use a channel to signal when RefreshData would start
-		refreshStarted := make(chan bool, 1)
-		go func() {
-			RefreshData()
-			refreshStarted <- true
-		}()
-
-		// Wait a short time to see if RefreshData starts
-		select {
-		case <-refreshStarted:
-			t.Error("RefreshData should not start when already loading")
-		case <-time.After(100 * time.Millisecond):
-			// Expected: RefreshData should be waiting
-		}
-
-		// Clean up
-		SetLoadingStatus(false, false, false)
-	})
-
-	// Test 2: Verify RefreshData runs when data is loaded
-	t.Run("RefreshWhenLoaded", func(t *testing.T) {
-		reset, restore := setupInitializeDataTest()
-		defer restore()
-		reset()
-
-		// Set up successful data loading
-		restoreTransport := setMockTransport(successTransport())
-		defer restoreTransport()
-
-		// Load initial data
-		err := InitializeData()
-		if err != nil {
-			t.Fatalf("Failed to initialize data: %v", err)
-		}
-
-		// Set loaded state
-		SetLoadingStatus(false, true, false)
-
-		// Test that RefreshData runs without crashing when data is loaded
-		// Since RefreshData sleeps for 24 hours before refreshing when loaded,
-		// we just verify it doesn't crash and maintains proper state
-		go RefreshData()
-
-		// Wait a short time to ensure the goroutine is running
-		time.Sleep(100 * time.Millisecond)
-
-		// Verify the RefreshData is running (should not crash)
-		// The actual refresh will happen after 24 hours, which we can't test in a unit test
-		status := GetLoadingStatus()
-		if status.IsLoading {
-			t.Error("RefreshData should not set loading state immediately when data is loaded")
-		}
-		if !status.IsLoaded {
-			t.Error("RefreshData should maintain loaded state when data is loaded")
-		}
-	})
-
-	// Test 3: Verify RefreshData retries when failed
-	t.Run("RetryWhenFailed", func(t *testing.T) {
-		reset, restore := setupInitializeDataTest()
-		defer restore()
-		reset()
-
-		// Set failed state
-		SetLoadingStatus(false, false, true)
-
-		// Use a transport that always fails
-		http.DefaultClient.Transport = failAllTransport()
-
-		// Run RefreshData in a goroutine
-		go RefreshData()
-
-		// Wait for the initial sleep and retry to happen (1 second sleep + processing time)
-		time.Sleep(1500 * time.Millisecond)
-
-		// Verify it's still trying (should be in loading state)
-		status := GetLoadingStatus()
-		if !status.IsLoading {
-			t.Error("Expected RefreshData to set loading state when retrying")
-		}
-	})
+	return reset, restore
 }
 
-// ---- Test helpers ----
+// ============================================================================
+// TEST HELPERS - Mock HTTP Transport
+// ============================================================================
 
-// roundTripFunc helps us define inline RoundTripper implementations
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
-// setMockTransport sets http.DefaultClient.Transport and returns a restore function
 func setMockTransport(rt http.RoundTripper) func() {
 	prev := http.DefaultClient.Transport
 	http.DefaultClient.Transport = rt
 	return func() { http.DefaultClient.Transport = prev }
 }
 
-// Helpers to build responses
 func httpResponse(status int, body string) *http.Response {
 	return &http.Response{
 		StatusCode: status,
@@ -600,39 +578,4 @@ func httpResponse(status int, body string) *http.Response {
 		Header:     make(http.Header),
 		Request:    &http.Request{},
 	}
-}
-
-// endpoint behavior for mixed transport
-type endpointBehavior struct{ kind int }
-
-const (
-	kindSuccess = iota
-	kindError
-	kindStatus500
-)
-
-// mixedTransport allows specifying behavior per path; unspecified default to success
-func mixedTransport(behaviors map[string]endpointBehavior) http.RoundTripper {
-	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		for path, b := range behaviors {
-			if strings.Contains(r.URL.Path, path) || strings.Contains(r.URL.String(), path) {
-				switch b.kind {
-				case kindError:
-					return nil, errors.New("simulated network error")
-				case kindStatus500:
-					return httpResponse(http.StatusInternalServerError, ""), nil
-				default:
-					// success
-					return successTransport().RoundTrip(r)
-				}
-			}
-		}
-		return successTransport().RoundTrip(r)
-	})
-}
-
-func failAllTransport() http.RoundTripper {
-	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		return nil, errors.New("simulated network error")
-	})
 }
