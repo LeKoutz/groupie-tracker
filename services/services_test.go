@@ -77,32 +77,6 @@ func TestGetRelationsByID(t *testing.T) {
 	}
 }
 
-func TestParseDate(t *testing.T) {
-	tests := []struct {
-		in      string
-		wantErr bool
-		want    time.Time
-	}{
-		{"02-01-2006", false, time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC)},
-		{"*23-08-2019", false, time.Date(2019, 8, 23, 0, 0, 0, 0, time.UTC)},
-		{"02/01/2006", false, time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC)},
-		{" 02.01.2006 ", false, time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC)},
-		{"", true, time.Time{}},
-		{"32-01-2006", true, time.Time{}},
-		{"not-a-date", true, time.Time{}},
-	}
-
-	for _, tt := range tests {
-		got, err := parseDate(tt.in)
-		if (err != nil) != tt.wantErr {
-			t.Errorf("parseDate(%q) error = %v, wantErr %v", tt.in, err, tt.wantErr)
-		}
-		if !tt.wantErr && !got.Equal(tt.want) {
-			t.Errorf("parseDate(%q) = %v, want %v", tt.in, got, tt.want)
-		}
-	}
-}
-
 func TestTitleCase(t *testing.T) {
 	tests := map[string]string{
 		"hello world": "Hello World",
@@ -128,6 +102,58 @@ func TestFormatLocationName(t *testing.T) {
 	for in, want := range tests {
 		if got := formatLocationName(in); got != want {
 			t.Errorf("formatLocationName(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+func TestFormatLocations(t *testing.T) {
+	r := &models.Relations{
+		DatesLocations: map[string][]string{
+			"new-york-usa": {"01-01-2020"},
+			"paris-france": {"02-01-2020"},
+		},
+	}
+
+	formatLocations(r)
+
+	if _, exists := r.DatesLocations["new-york-usa"]; exists {
+		t.Error("Raw key should be replaced with formatted key")
+	}
+	if _, exists := r.DatesLocations["New York, USA"]; !exists {
+		t.Error("Formatted key should exist")
+	}
+}
+
+func TestFormatLocationNameAlreadyFormatted(t *testing.T) {
+    // Test that already formatted strings are not processed again
+    formatted := "New York, USA"
+    result := formatLocationName(formatted)
+    if result != formatted {
+        t.Errorf("Already formatted string should be returned as-is, got %q", result)
+    }
+}
+
+func TestParseDate(t *testing.T) {
+	tests := []struct {
+		in      string
+		wantErr bool
+		want    time.Time
+	}{
+		{"02-01-2006", false, time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC)},
+		{"*23-08-2019", false, time.Date(2019, 8, 23, 0, 0, 0, 0, time.UTC)},
+		{"02/01/2006", false, time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC)},
+		{" 02.01.2006 ", false, time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC)},
+		{"", true, time.Time{}},
+		{"32-01-2006", true, time.Time{}},
+		{"not-a-date", true, time.Time{}},
+	}
+
+	for _, tt := range tests {
+		got, err := parseDate(tt.in)
+		if (err != nil) != tt.wantErr {
+			t.Errorf("parseDate(%q) error = %v, wantErr %v", tt.in, err, tt.wantErr)
+		}
+		if !tt.wantErr && !got.Equal(tt.want) {
+			t.Errorf("parseDate(%q) = %v, want %v", tt.in, got, tt.want)
 		}
 	}
 }
@@ -189,35 +215,6 @@ func TestSortLocationsByDate(t *testing.T) {
 		t.Errorf("Expected Location B first (newest), got %s", r.SortedLocations[0])
 	}
 }
-
-func TestFormatLocations(t *testing.T) {
-	r := &models.Relations{
-		DatesLocations: map[string][]string{
-			"new-york-usa": {"01-01-2020"},
-			"paris-france": {"02-01-2020"},
-		},
-	}
-
-	formatLocations(r)
-
-	if _, exists := r.DatesLocations["new-york-usa"]; exists {
-		t.Error("Raw key should be replaced with formatted key")
-	}
-	if _, exists := r.DatesLocations["New York, USA"]; !exists {
-		t.Error("Formatted key should exist")
-	}
-}
-
-func TestFormatLocationNameAlreadyFormatted(t *testing.T) {
-    // Test that already formatted strings are not processed again
-    formatted := "New York, USA"
-    result := formatLocationName(formatted)
-    if result != formatted {
-        t.Errorf("Already formatted string should be returned as-is, got %q", result)
-    }
-}
-
-
 func TestProcessRelations(t *testing.T) {
 	r := &models.Relations{
 		DatesLocations: map[string][]string{
