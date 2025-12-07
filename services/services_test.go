@@ -2,6 +2,7 @@ package services
 
 import (
 	"testing"
+	"time"
 
 	"groupie-tracker/api"
 	"groupie-tracker/models"
@@ -72,6 +73,32 @@ func TestGetRelationsByID(t *testing.T) {
 	}
 	if _, err := GetRelationsByID(999); err == nil {
 		t.Error("GetRelationsByID(999) should return error")
+	}
+}
+
+func TestParseDate(t *testing.T) {
+	tests := []struct {
+		in      string
+		wantErr bool
+		want    time.Time
+	}{
+		{"02-01-2006", false, time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC)},
+		{"*23-08-2019", false, time.Date(2019, 8, 23, 0, 0, 0, 0, time.UTC)},
+		{"02/01/2006", false, time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC)},
+		{" 02.01.2006 ", false, time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC)},
+		{"", true, time.Time{}},
+		{"32-01-2006", true, time.Time{}},
+		{"not-a-date", true, time.Time{}},
+	}
+
+	for _, tt := range tests {
+		got, err := parseDate(tt.in)
+		if (err != nil) != tt.wantErr {
+			t.Errorf("parseDate(%q) error = %v, wantErr %v", tt.in, err, tt.wantErr)
+		}
+		if !tt.wantErr && !got.Equal(tt.want) {
+			t.Errorf("parseDate(%q) = %v, want %v", tt.in, got, tt.want)
+		}
 	}
 }
 
