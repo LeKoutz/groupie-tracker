@@ -31,3 +31,15 @@ func TestGetArtistByID(t *testing.T) {
 		t.Error("GetArtistByID(999) should return error")
 	}
 }
+
+func TestGetLocationsByID(t *testing.T) {
+	defer setupTestData()()
+	api.All_Locations = []models.Locations{{ID: 1, Locations: []string{"Loc1"}}}
+
+	if loc, err := GetLocationsByID(1); err != nil || loc.ID != 1 {
+		t.Errorf("GetLocationsByID(1) failed: %v, %v", loc, err)
+	}
+	if _, err := GetLocationsByID(999); err == nil {
+		t.Error("GetLocationsByID(999) should return error")
+	}
+}
