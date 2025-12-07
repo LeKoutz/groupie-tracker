@@ -12,15 +12,74 @@ import (
 	"time"
 )
 
-// helper function for wrapping fetch functions to return any type
-func wrapFetchFunc[T any](fetchFunc func(context.Context) (T, error)) func(context.Context) (any, error) {
-	return func(ctx context.Context) (any, error) {
-		result, err := fetchFunc(ctx)
-		if err != nil {
-			return nil, err
+// ============================================================================
+// MOCK TRANSPORTS
+// ============================================================================
+
+func successTransport() http.RoundTripper {
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		url := r.URL.String()
+		switch {
+		case strings.Contains(url, "/api/artists"):
+			body := `[{"id":1,"image":"img","name":"Band","members":["A","B"],"creationDate":2000,"firstAlbum":"01-01-2001","locations":"/api/locations/1","concertDates":"/api/dates/1","relations":"/api/relation/1"}]`
+			return httpResponse(http.StatusOK, body), nil
+		case strings.Contains(url, "/api/locations"):
+			body := `{"index":[{"id":1,"locations":["paris-france"],"dates":"/api/dates/1"}]}`
+			return httpResponse(http.StatusOK, body), nil
+		case strings.Contains(url, "/api/dates"):
+			body := `{"index":[{"id":1,"dates":["01-01-2020"]}]}`
+			return httpResponse(http.StatusOK, body), nil
+		case strings.Contains(url, "/api/relation"):
+			body := `{"index":[{"id":1,"datesLocations":{"paris-france":["01-01-2020"]}}]}`
+			return httpResponse(http.StatusOK, body), nil
+		default:
+			return httpResponse(http.StatusNotFound, ""), nil
 		}
-		return result, err
-	}
+	})
+}
+
+func errorTransport() http.RoundTripper {
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		return nil, errors.New("network error")
+	})
+}
+
+func statusCodeTransport(code int) http.RoundTripper {
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		return httpResponse(code, ""), nil
+	})
+}
+
+func invalidJSONTransport() http.RoundTripper {
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		return httpResponse(http.StatusOK, "invalid json"), nil
+	})
+}
+
+// retryThenSuccessTransport fails N times per path, then succeeds
+func retryThenSuccessTransport(failuresPerPath map[string]int) http.RoundTripper {
+	var mu sync.Mutex
+	counts := make(map[string]int)
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		matched := ""
+		for path := range failuresPerPath {
+			if strings.Contains(r.URL.String(), path) {
+				matched = path
+				break
+			}
+		}
+		if matched != "" {
+			mu.Lock()
+			counts[matched]++
+			c := counts[matched]
+			limit := failuresPerPath[matched]
+			mu.Unlock()
+			if c <= limit {
+				return nil, errors.New("simulated transient error")
+			}
+		}
+		return successTransport().RoundTrip(r)
+	})
 }
 
 // ============================================================================
@@ -109,99 +168,117 @@ func TestFetchRelations_DataValidation(t *testing.T) {
 	}
 }
 
-// Table-driven test for network errors across all endpoints
-func TestAllEndpoints_NetworkErrors(t *testing.T) {
-	type endpointTest struct {
-		name        string
-		path        string
-		fetchFunc   func(context.Context) (any, error)
-		shouldBeNil bool
-	}
+// ============================================================================
+// TESTS - Endpoint Error Handling
+// ============================================================================
 
-	endpoints := []endpointTest{
-		{"artists", "/api/artists", wrapFetchFunc(FetchArtistsWithContext), true},
-		{"locations", "/api/locations", wrapFetchFunc(FetchLocationsWithContext), true},
-		{"dates", "/api/dates", wrapFetchFunc(FetchDatesWithContext), true},
-		{"relations", "/api/relation", wrapFetchFunc(FetchRelationsWithContext), true},
-	}
-
-	for _, tt := range endpoints {
-		t.Run(tt.name, func(t *testing.T) {
-			restore := setMockTransport(errorTransport(map[string]error{
-				tt.path: errors.New("dial error"),
-			}))
-			defer restore()
-
-			result, err := tt.fetchFunc(context.Background())
-			if err == nil {
-				t.Error("Expected error for network issue, but got none")
-			}
-			if tt.shouldBeNil && result != nil {
-				t.Error("Expected nil result on error")
-			}
-		})
-	}
-}
-func TestAllEndpoints_StatusCodeErrors(t *testing.T) {
-	type endpointTest struct {
-		name       string
-		path       string
-		statusCode int
-		fetchFunc  func(context.Context) (any, error)
-	}
-
-	endpoints := []endpointTest{
-		{"artists", "/api/artists", http.StatusInternalServerError, wrapFetchFunc(FetchArtistsWithContext)},
-		{"locations", "/api/locations", http.StatusNotFound, wrapFetchFunc(FetchLocationsWithContext)},
-		{"dates", "/api/dates", http.StatusBadRequest, wrapFetchFunc(FetchDatesWithContext)},
-		{"relations", "/api/relation", http.StatusForbidden, wrapFetchFunc(FetchRelationsWithContext)},
-	}
-
-	for _, tt := range endpoints {
-		t.Run(tt.name, func(t *testing.T) {
-			restore := setMockTransport(statusTransport(map[string]int{
-				tt.path: tt.statusCode,
-			}))
-			defer restore()
-
-			result, err := tt.fetchFunc(context.Background())
-			if err == nil {
-				t.Errorf("Expected error for status code %d, but got none", tt.statusCode)
-			}
-			if result != nil {
-				t.Error("Expected nil result on error")
-			}
-		})
-	}
-}
-
-func TestAllEndpoints_JSONDecodeErrors(t *testing.T) {
-	type endpointTest struct {
+func TestFetchArtists_Errors(t *testing.T) {
+	tests := []struct {
 		name      string
-		path      string
-		fetchFunc func(context.Context) (any, error)
+		transport http.RoundTripper
+		wantErr   bool
+	}{
+		{"network error", errorTransport(), true},
+		{"bad status code", statusCodeTransport(http.StatusInternalServerError), true},
+		{"invalid JSON", invalidJSONTransport(), true},
+		{"success", successTransport(), false},
 	}
 
-	endpoints := []endpointTest{
-		{"artists", "/api/artists", wrapFetchFunc(FetchArtistsWithContext)},
-		{"locations", "/api/locations", wrapFetchFunc(FetchLocationsWithContext)},
-		{"dates", "/api/dates", wrapFetchFunc(FetchDatesWithContext)},
-		{"relations", "/api/relation", wrapFetchFunc(FetchRelationsWithContext)},
-	}
-
-	for _, tt := range endpoints {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			restore := setMockTransport(bodyTransport(map[string]mockBody{
-				tt.path: {status: http.StatusOK, body: "invalid json"},
-			}))
+			restore := setMockTransport(tt.transport)
 			defer restore()
 
-			result, err := tt.fetchFunc(context.Background())
-			if err == nil {
-				t.Error("Expected error for invalid JSON, but got none")
+			result, err := FetchArtistsWithContext(context.Background())
+			if (err != nil) != tt.wantErr {
+				t.Errorf("wantErr=%v, got err=%v", tt.wantErr, err)
 			}
-			if result != nil {
-				t.Error("Expected nil result on error")
+			if !tt.wantErr && len(result) == 0 {
+				t.Error("Expected non-empty result on success")
+			}
+		})
+	}
+}
+
+func TestFetchLocations_Errors(t *testing.T) {
+	tests := []struct {
+		name      string
+		transport http.RoundTripper
+		wantErr   bool
+	}{
+		{"network error", errorTransport(), true},
+		{"bad status code", statusCodeTransport(http.StatusNotFound), true},
+		{"invalid JSON", invalidJSONTransport(), true},
+		{"success", successTransport(), false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := setMockTransport(tt.transport)
+			defer restore()
+
+			result, err := FetchLocationsWithContext(context.Background())
+			if (err != nil) != tt.wantErr {
+				t.Errorf("wantErr=%v, got err=%v", tt.wantErr, err)
+			}
+			if !tt.wantErr && len(result) == 0 {
+				t.Error("Expected non-empty result on success")
+			}
+		})
+	}
+}
+
+func TestFetchDates_Errors(t *testing.T) {
+	tests := []struct {
+		name      string
+		transport http.RoundTripper
+		wantErr   bool
+	}{
+		{"network error", errorTransport(), true},
+		{"bad status code", statusCodeTransport(http.StatusBadRequest), true},
+		{"invalid JSON", invalidJSONTransport(), true},
+		{"success", successTransport(), false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := setMockTransport(tt.transport)
+			defer restore()
+
+			result, err := FetchDatesWithContext(context.Background())
+			if (err != nil) != tt.wantErr {
+				t.Errorf("wantErr=%v, got err=%v", tt.wantErr, err)
+			}
+			if !tt.wantErr && len(result) == 0 {
+				t.Error("Expected non-empty result on success")
+			}
+		})
+	}
+}
+
+func TestFetchRelations_Errors(t *testing.T) {
+	tests := []struct {
+		name      string
+		transport http.RoundTripper
+		wantErr   bool
+	}{
+		{"network error", errorTransport(), true},
+		{"bad status code", statusCodeTransport(http.StatusForbidden), true},
+		{"invalid JSON", invalidJSONTransport(), true},
+		{"success", successTransport(), false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := setMockTransport(tt.transport)
+			defer restore()
+
+			result, err := FetchRelationsWithContext(context.Background())
+			if (err != nil) != tt.wantErr {
+				t.Errorf("wantErr=%v, got err=%v", tt.wantErr, err)
+			}
+			if !tt.wantErr && len(result) == 0 {
+				t.Error("Expected non-empty result on success")
 			}
 		})
 	}
@@ -346,44 +423,6 @@ func TestInitializeData_AllFailure(t *testing.T) {
 		t.Error("Expected relations to remain empty on all failures")
 	}
 }
-
-// --- Retry transport and test for InitializeData retry logic ---
-
-// retryThenSuccessTransport returns errors for the first N requests per path, then succeeds
-func retryThenSuccessTransport(failuresByPath map[string]int) http.RoundTripper {
-	// retryThenSuccessTransport simulates transient failures per endpoint path.
-	// For each provided path, the first N (map value) requests fail with a network error,
-	// and subsequent requests succeed by delegating to successTransport().
-	// This is used to exercise InitializeData's retry logic (2 retries = 3 total attempts).
-	// Path matching uses substring checks against r.URL.Path or r.URL.String().
-	var mu sync.Mutex
-	counts := make(map[string]int)
-	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		// Determine matched key
-		matched := ""
-		for path := range failuresByPath {
-			if strings.Contains(r.URL.Path, path) || strings.Contains(r.URL.String(), path) {
-				matched = path
-				break
-			}
-		}
-		if matched != "" {
-			mu.Lock()
-			counts[matched]++
-			c := counts[matched]
-			limit := failuresByPath[matched]
-			mu.Unlock()
-			if c <= limit {
-				return nil, errors.New("simulated transient error")
-			}
-			// After failures, return success for that endpoint
-			return successTransport().RoundTrip(r)
-		}
-		// Unspecified: default to success
-		return successTransport().RoundTrip(r)
-	})
-}
-
 func TestInitializeData_RetryEventuallySucceeds(t *testing.T) {
 	reset, restore := setupInitializeDataTest()
 	defer restore()
@@ -561,81 +600,6 @@ func httpResponse(status int, body string) *http.Response {
 		Header:     make(http.Header),
 		Request:    &http.Request{},
 	}
-}
-
-// successTransport returns valid JSON bodies for all endpoints
-func successTransport() http.RoundTripper {
-	// The JSON payloads below are intentionally minimal yet valid for the current model shapes
-	// (Artists, LocationsIndex, DatesIndex, RelationIndex). If the model structures change
-	// (fields, nesting, required properties), update these payloads accordingly.
-	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		url := r.URL.String()
-		switch {
-		case strings.Contains(url, "/api/artists"):
-			// Minimal valid artists array
-			body := `[{"id":1,"image":"img","name":"Band","members":["A","B"],"creationDate":2000,"firstAlbum":"01-01-2001","locations":"/api/locations/1","concertDates":"/api/dates/1","relations":"/api/relation/1"}]`
-			return httpResponse(http.StatusOK, body), nil
-		case strings.Contains(url, "/api/locations"):
-			body := `{"index":[{"id":1,"locations":["paris-france"],"dates":"/api/dates/1"}]}`
-			return httpResponse(http.StatusOK, body), nil
-		case strings.Contains(url, "/api/dates"):
-			body := `{"index":[{"id":1,"dates":["01-01-2020"]}]}`
-			return httpResponse(http.StatusOK, body), nil
-		case strings.Contains(url, "/api/relation"):
-			body := `{"index":[{"id":1,"datesLocations":{"paris-france":["01-01-2020"]}}]}`
-			return httpResponse(http.StatusOK, body), nil
-		default:
-			return httpResponse(http.StatusNotFound, ""), nil
-		}
-	})
-}
-
-// statusTransport returns specific status codes for selected paths
-func statusTransport(statusByPath map[string]int) http.RoundTripper {
-	// Path matching in all transport helpers (statusTransport, errorTransport, bodyTransport,
-	// mixedTransport) uses substring checks against r.URL.Path and r.URL.String().
-	// To avoid accidental matches, prefer unique path stubs like "/api/artists" rather than
-	// overly generic substrings. If exact matching is desired, consider tightening the matcher.
-	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		for path, code := range statusByPath {
-			if strings.Contains(r.URL.Path, path) || strings.Contains(r.URL.String(), path) {
-				return httpResponse(code, ""), nil
-			}
-		}
-		// default success for others
-		return successTransport().RoundTrip(r)
-	})
-}
-
-// errorTransport returns errors for selected paths
-func errorTransport(errByPath map[string]error) http.RoundTripper {
-	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		for path, e := range errByPath {
-			if strings.Contains(r.URL.Path, path) || strings.Contains(r.URL.String(), path) {
-				return nil, e
-			}
-		}
-		// default success for others
-		return successTransport().RoundTrip(r)
-	})
-}
-
-type mockBody struct {
-	status int
-	body   string
-}
-
-// bodyTransport returns custom body for selected paths
-func bodyTransport(bodyByPath map[string]mockBody) http.RoundTripper {
-	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		for path, mb := range bodyByPath {
-			if strings.Contains(r.URL.Path, path) || strings.Contains(r.URL.String(), path) {
-				return httpResponse(mb.status, mb.body), nil
-			}
-		}
-		// default success for others
-		return successTransport().RoundTrip(r)
-	})
 }
 
 // endpoint behavior for mixed transport
