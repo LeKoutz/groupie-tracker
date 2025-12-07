@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"reflect"
+	"groupie-tracker/models"
 )
 
 // NOTE ABOUT TEST EXECUTION AND GLOBAL STATE
@@ -16,7 +18,7 @@ import (
 // All_Dates, All_Relations) and also swap out http.DefaultClient.Transport to mock HTTP calls.
 // This is done to avoid actual network calls and to control the test environment.
 
-// helper function
+// helper function for wrapping fetch functions to return any type
 func wrapFetchFunc[T any](fetchFunc func(context.Context) (T, error)) func(context.Context) (any, error) {
 	return func(ctx context.Context) (any, error) {
 		result, err := fetchFunc(ctx)
@@ -27,45 +29,76 @@ func wrapFetchFunc[T any](fetchFunc func(context.Context) (T, error)) func(conte
 	}
 }
 
-/*
-TestFetchArtists_DataValidation checks that fetched artist data has valid fields: positive ID, non-empty name, members, creation date, first album, locations, concert dates, and relations.
-*/
-func TestFetchArtists_DataValidation(t *testing.T) {
-	restore := setMockTransport(successTransport())
-	defer restore()
+// helper functions to validate data structures
+// validateArtist validates a single artist's fields
+func validateArtist(t *testing.T, artist models.Artists) {
+    t.Helper() // Marks this as a test helper function
 
-	artists, err := FetchArtistsWithContext(context.Background())
-	if err != nil {
-		// Guard against accidental network usage: this test assumes successTransport is set.
-		t.Skip("Skipping data validation due to fetch error")
-	}
-	for _, artist := range artists {
-		if artist.ID <= 0 {
-			t.Errorf("Artist ID should be positive, got %d", artist.ID)
-		}
-		if artist.Name == "" {
-			t.Error("Artist Name should not be empty")
-		}
-		if len(artist.Members) == 0 {
-			t.Error("Artist Members should not be empty")
-		}
-		if artist.CreationDate <= 0 {
-			t.Errorf("Artist CreationDate should be positive, got %d", artist.CreationDate)
-		}
-		if artist.FirstAlbum == "" {
-			t.Error("Artist FirstAlbum should not be empty")
-		}
-		if artist.Locations == "" {
-			t.Error("Artist Locations should not be empty")
-		}
-		if artist.ConcertDates == "" {
-			t.Error("Artist ConcertDates should not be empty")
-		}
-		if artist.Relations == "" {
-			t.Error("Artist Relations should not be empty")
-		}
-	}
+    if artist.ID <= 0 {
+        t.Errorf("Artist ID should be positive, got %d", artist.ID)
+    }
+    if artist.Name == "" {
+        t.Error("Artist Name should not be empty")
+    }
+    if len(artist.Members) == 0 {
+        t.Error("Artist Members should not be empty")
+    }
+    if artist.CreationDate <= 0 {
+        t.Errorf("Artist CreationDate should be positive, got %d", artist.CreationDate)
+    }
+    if artist.FirstAlbum == "" {
+        t.Error("Artist FirstAlbum should not be empty")
+    }
+    if artist.Locations == "" {
+        t.Error("Artist Locations should not be empty")
+    }
+    if artist.ConcertDates == "" {
+        t.Error("Artist ConcertDates should not be empty")
+    }
+    if artist.Relations == "" {
+        t.Error("Artist Relations should not be empty")
+    }
 }
+
+// validateLocation validates a single location's fields
+func validateLocation(t *testing.T, loc models.Locations) {
+    t.Helper()
+
+    if loc.ID <= 0 {
+        t.Errorf("Location ID should be positive, got %d", loc.ID)
+    }
+    if len(loc.Locations) == 0 {
+        t.Error("Location Locations should not be empty")
+    }
+    if loc.Dates == "" {
+        t.Error("Location Dates should not be empty")
+    }
+}
+
+// validateDate validates a single date's fields
+func validateDate(t *testing.T, date models.Dates) {
+    t.Helper()
+
+    if date.ID <= 0 {
+        t.Errorf("Date ID should be positive, got %d", date.ID)
+    }
+    if len(date.ConcertDates) == 0 {
+        t.Error("Date ConcertDates should not be empty")
+    }
+}
+
+// validateRelation validates a single relation's fields
+func validateRelation(t *testing.T, rel models.Relations) {
+    t.Helper()
+
+    if rel.ID <= 0 {
+        t.Errorf("Relation ID should be positive, got %d", rel.ID)
+    }
+    if len(rel.DatesLocations) == 0 {
+        t.Error("Relation DatesLocations should not be empty")
+    }
+}
+
 
 // Table-driven test for network errors across all endpoints
 func TestAllEndpoints_NetworkErrors(t *testing.T) {
@@ -160,6 +193,78 @@ func TestAllEndpoints_JSONDecodeErrors(t *testing.T) {
 			}
 			if result != nil {
 				t.Error("Expected nil result on error")
+			}
+		})
+	}
+}
+
+func TestAllEndpoints_DataValidation(t *testing.T) {
+	type validationTest struct {
+		name       string
+		fetchFunc  func(context.Context) (any, error)
+		validateFunc func(t *testing.T, item any)
+	}
+
+	tests := []validationTest{
+		{
+			name: "artists",
+			fetchFunc: func(ctx context.Context) (any, error) {
+				return FetchArtistsWithContext(ctx)
+			},
+			validateFunc: func(t *testing.T, item any) {
+				if artist, ok := item.(models.Artists); ok {
+					validateArtist(t, artist)
+				}
+			},
+		},
+		{
+			name: "locations",
+			fetchFunc: func(ctx context.Context) (any, error) {
+				return FetchLocationsWithContext(ctx)
+			},
+			validateFunc: func(t *testing.T, item any) {
+				if loc, ok := item.(models.Locations); ok {
+					validateLocation(t, loc)
+				}
+			},
+		},
+		{
+			name: "relations",
+			fetchFunc: func(ctx context.Context) (any, error) {
+				return FetchRelationsWithContext(ctx)
+			},
+			validateFunc: func(t *testing.T, item any) {
+				if rel, ok := item.(models.Relations); ok {
+					validateRelation(t, rel)
+				}
+			},
+		},
+		{
+			name: "dates",
+			fetchFunc: func(ctx context.Context) (any, error) {
+				return FetchDatesWithContext(ctx)
+			},
+			validateFunc: func(t *testing.T, item any) {
+				if date, ok := item.(models.Dates); ok {
+					validateDate(t, date)
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := setMockTransport(successTransport())
+			defer restore()
+
+			items, err := tt.fetchFunc(context.Background())
+			if err != nil {
+				t.Skipf("Skipping %s data validation due to fetch error", tt.name)
+			}
+
+			// Use reflection to handle slices generically
+			v := reflect.ValueOf(items)
+			for i := 0; i < v.Len(); i++ {
+				tt.validateFunc(t, v.Index(i).Interface())
 			}
 		})
 	}
@@ -363,75 +468,6 @@ func TestInitializeData_RetryEventuallySucceeds(t *testing.T) {
 	}
 	if len(All_Artists) == 0 || len(All_Locations) == 0 || len(All_Dates) == 0 || len(All_Relations) == 0 {
 		t.Fatal("Expected all datasets to be loaded after retries")
-	}
-}
-
-/*
-TestFetchLocations_DataValidation checks that fetched location data has valid fields: positive ID, non-empty locations list, and non-empty dates string.
-*/
-func TestFetchLocations_DataValidation(t *testing.T) {
-	restore := setMockTransport(successTransport())
-	defer restore()
-
-	locations, err := FetchLocationsWithContext(context.Background())
-	if err != nil {
-		// Guard against accidental network usage: this test assumes successTransport is set.
-		t.Skip("Skipping data validation due to fetch error")
-	}
-	for _, loc := range locations {
-		if loc.ID <= 0 {
-			t.Errorf("Location ID should be positive, got %d", loc.ID)
-		}
-		if len(loc.Locations) == 0 {
-			t.Error("Location Locations should not be empty")
-		}
-		if loc.Dates == "" {
-			t.Error("Location Dates should not be empty")
-		}
-	}
-}
-
-/*
-TestFetchDates_DataValidation checks that fetched date data has valid fields: positive ID and non-empty concert dates list.
-*/
-func TestFetchDates_DataValidation(t *testing.T) {
-	restore := setMockTransport(successTransport())
-	defer restore()
-
-	dates, err := FetchDatesWithContext(context.Background())
-	if err != nil {
-		// Guard against accidental network usage: this test assumes successTransport is set.
-		t.Skip("Skipping data validation due to fetch error")
-	}
-	for _, date := range dates {
-		if date.ID <= 0 {
-			t.Errorf("Date ID should be positive, got %d", date.ID)
-		}
-		if len(date.ConcertDates) == 0 {
-			t.Error("Date ConcertDates should not be empty")
-		}
-	}
-}
-
-/*
-TestFetchRelations_DataValidation checks that fetched relation data has valid fields: positive ID and non-empty dates locations map.
-*/
-func TestFetchRelations_DataValidation(t *testing.T) {
-	restore := setMockTransport(successTransport())
-	defer restore()
-
-	relations, err := FetchRelationsWithContext(context.Background())
-	if err != nil {
-		// Guard against accidental network usage: this test assumes successTransport is set.
-		t.Skip("Skipping data validation due to fetch error")
-	}
-	for _, rel := range relations {
-		if rel.ID <= 0 {
-			t.Errorf("Relation ID should be positive, got %d", rel.ID)
-		}
-		if len(rel.DatesLocations) == 0 {
-			t.Error("Relation DatesLocations should not be empty")
-		}
 	}
 }
 
