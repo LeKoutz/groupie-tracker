@@ -116,4 +116,17 @@ func TestTitleCase(t *testing.T) {
 	}
 }
 
-
+func TestFormatLocationName(t *testing.T) {
+	tests := map[string]string{
+		"new-york-usa":         "New York, USA",
+		"san-juan-puerto-rico": "San Juan Puerto, Rico",
+		"los_angeles-usa":      "Los Angeles, USA",
+		"london":               "London",
+		"london-uk":            "London, UK",
+	}
+	for in, want := range tests {
+		if got := formatLocationName(in); got != want {
+			t.Errorf("formatLocationName(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
