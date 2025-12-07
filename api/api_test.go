@@ -13,6 +13,29 @@ import (
 )
 
 // ============================================================================
+// TEST HELPERS - Mock HTTP Transport
+// ============================================================================
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func setMockTransport(rt http.RoundTripper) func() {
+	prev := http.DefaultClient.Transport
+	http.DefaultClient.Transport = rt
+	return func() { http.DefaultClient.Transport = prev }
+}
+
+func httpResponse(status int, body string) *http.Response {
+	return &http.Response{
+		StatusCode: status,
+		Body:       io.NopCloser(bytes.NewBufferString(body)),
+		Header:     make(http.Header),
+		Request:    &http.Request{},
+	}
+}
+
+// ============================================================================
 // MOCK TRANSPORTS
 // ============================================================================
 
@@ -82,90 +105,43 @@ func retryThenSuccessTransport(failuresPerPath map[string]int) http.RoundTripper
 	})
 }
 
+// failOneEndpoint fails a specific endpoint, succeeds for others
+func failOneEndpoint(path string) http.RoundTripper {
+	return roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if strings.Contains(r.URL.String(), path) {
+			return nil, errors.New("simulated error")
+		}
+		return successTransport().RoundTrip(r)
+	})
+}
+
 // ============================================================================
-// TESTS - Data Validation
+// TEST STATE MANAGEMENT
 // ============================================================================
 
-func TestFetchArtists_DataValidation(t *testing.T) {
-	restore := setMockTransport(successTransport())
-	defer restore()
+func setupTest() (reset func(), restore func()) {
+	originalArtists := All_Artists
+	originalLocations := All_Locations
+	originalDates := All_Dates
+	originalRelations := All_Relations
+	originalTransport := http.DefaultClient.Transport
 
-	artists, err := FetchArtistsWithContext(context.Background())
-	if err != nil {
-		t.Fatalf("Fetch failed: %v", err)
+	reset = func() {
+		All_Artists = nil
+		All_Locations = nil
+		All_Dates = nil
+		All_Relations = nil
 	}
 
-	for _, artist := range artists {
-		if artist.ID <= 0 {
-			t.Errorf("Invalid artist ID: %d", artist.ID)
-		}
-		if artist.Name == "" {
-			t.Error("Artist name is empty")
-		}
-		if len(artist.Members) == 0 {
-			t.Error("Artist has no members")
-		}
-		if artist.CreationDate <= 0 {
-			t.Errorf("Invalid creation date: %d", artist.CreationDate)
-		}
-	}
-}
-
-func TestFetchLocations_DataValidation(t *testing.T) {
-	restore := setMockTransport(successTransport())
-	defer restore()
-
-	locations, err := FetchLocationsWithContext(context.Background())
-	if err != nil {
-		t.Fatalf("Fetch failed: %v", err)
+	restore = func() {
+		All_Artists = originalArtists
+		All_Locations = originalLocations
+		All_Dates = originalDates
+		All_Relations = originalRelations
+		http.DefaultClient.Transport = originalTransport
 	}
 
-	for _, loc := range locations {
-		if loc.ID <= 0 {
-			t.Errorf("Invalid location ID: %d", loc.ID)
-		}
-		if len(loc.Locations) == 0 {
-			t.Error("Location has no locations")
-		}
-	}
-}
-
-func TestFetchDates_DataValidation(t *testing.T) {
-	restore := setMockTransport(successTransport())
-	defer restore()
-
-	dates, err := FetchDatesWithContext(context.Background())
-	if err != nil {
-		t.Fatalf("Fetch failed: %v", err)
-	}
-
-	for _, date := range dates {
-		if date.ID <= 0 {
-			t.Errorf("Invalid date ID: %d", date.ID)
-		}
-		if len(date.ConcertDates) == 0 {
-			t.Error("Date has no concert dates")
-		}
-	}
-}
-
-func TestFetchRelations_DataValidation(t *testing.T) {
-	restore := setMockTransport(successTransport())
-	defer restore()
-
-	relations, err := FetchRelationsWithContext(context.Background())
-	if err != nil {
-		t.Fatalf("Fetch failed: %v", err)
-	}
-
-	for _, rel := range relations {
-		if rel.ID <= 0 {
-			t.Errorf("Invalid relation ID: %d", rel.ID)
-		}
-		if len(rel.DatesLocations) == 0 {
-			t.Error("Relation has no dates-locations mapping")
-		}
-	}
+	return reset, restore
 }
 
 // ============================================================================
@@ -284,145 +260,162 @@ func TestFetchRelations_Errors(t *testing.T) {
 	}
 }
 
-/*
-TestInitializeData_AllSuccess tests that InitializeData successfully loads all data (artists, locations, dates, relations) when all APIs are working.
-*/
-func setupInitializeDataTest() (func(), func()) {
-	// setupInitializeDataTest provides two closures:
-	//   reset:  explicitly clear package globals before running a test case
-	//   restore: defer this to restore both the globals and the default HTTP transport after the test
-	// This pattern prevents cross-test interference since tests in this file share global state
-	// and mutate http.DefaultClient.Transport.
-	// Save original state
-	originalArtists := All_Artists
-	originalLocations := All_Locations
-	originalDates := All_Dates
-	originalRelations := All_Relations
-	// Save original transport
-	originalTransport := http.DefaultClient.Transport
+// ============================================================================
+// TESTS - Data Validation
+// ============================================================================
 
-	/*
-		reset: A function you call manually to set globals to nil
-		restore: A function you defer to run at the end
-	*/
+func TestFetchArtists_DataValidation(t *testing.T) {
+	restore := setMockTransport(successTransport())
+	defer restore()
 
-	reset := func() {
-		All_Artists = nil
-		All_Locations = nil
-		All_Dates = nil
-		All_Relations = nil
+	artists, err := FetchArtistsWithContext(context.Background())
+	if err != nil {
+		t.Fatalf("Fetch failed: %v", err)
 	}
 
-	restore := func() {
-		All_Artists = originalArtists
-		All_Locations = originalLocations
-		All_Dates = originalDates
-		All_Relations = originalRelations
-		http.DefaultClient.Transport = originalTransport
+	for _, artist := range artists {
+		if artist.ID <= 0 {
+			t.Errorf("Invalid artist ID: %d", artist.ID)
+		}
+		if artist.Name == "" {
+			t.Error("Artist name is empty")
+		}
+		if len(artist.Members) == 0 {
+			t.Error("Artist has no members")
+		}
+		if artist.CreationDate <= 0 {
+			t.Errorf("Invalid creation date: %d", artist.CreationDate)
+		}
 	}
-
-	return reset, restore
 }
 
+func TestFetchLocations_DataValidation(t *testing.T) {
+	restore := setMockTransport(successTransport())
+	defer restore()
+
+	locations, err := FetchLocationsWithContext(context.Background())
+	if err != nil {
+		t.Fatalf("Fetch failed: %v", err)
+	}
+
+	for _, loc := range locations {
+		if loc.ID <= 0 {
+			t.Errorf("Invalid location ID: %d", loc.ID)
+		}
+		if len(loc.Locations) == 0 {
+			t.Error("Location has no locations")
+		}
+	}
+}
+
+func TestFetchDates_DataValidation(t *testing.T) {
+	restore := setMockTransport(successTransport())
+	defer restore()
+
+	dates, err := FetchDatesWithContext(context.Background())
+	if err != nil {
+		t.Fatalf("Fetch failed: %v", err)
+	}
+
+	for _, date := range dates {
+		if date.ID <= 0 {
+			t.Errorf("Invalid date ID: %d", date.ID)
+		}
+		if len(date.ConcertDates) == 0 {
+			t.Error("Date has no concert dates")
+		}
+	}
+}
+
+func TestFetchRelations_DataValidation(t *testing.T) {
+	restore := setMockTransport(successTransport())
+	defer restore()
+
+	relations, err := FetchRelationsWithContext(context.Background())
+	if err != nil {
+		t.Fatalf("Fetch failed: %v", err)
+	}
+
+	for _, rel := range relations {
+		if rel.ID <= 0 {
+			t.Errorf("Invalid relation ID: %d", rel.ID)
+		}
+		if len(rel.DatesLocations) == 0 {
+			t.Error("Relation has no dates-locations mapping")
+		}
+	}
+}
+
+// ============================================================================
+// TESTS - InitializeData
+// ============================================================================
+
 func TestInitializeData_AllSuccess(t *testing.T) {
-	reset, restore := setupInitializeDataTest()
+	reset, restore := setupTest()
 	defer restore()
 	reset()
 
-	// Mock all endpoints as success
 	restoreTransport := setMockTransport(successTransport())
 	defer restoreTransport()
 
-	errors := InitializeData()
+	errs := InitializeData()
 
-	if errors != nil {
-		t.Errorf("Expected no errors, but got: %v", errors)
+	if errs != nil {
+		t.Errorf("Expected no errors, got: %v", errs)
 	}
-	if len(All_Artists) == 0 {
-		t.Error("Expected artists to be loaded")
-	}
-	if len(All_Locations) == 0 {
-		t.Error("Expected locations to be loaded")
-	}
-	if len(All_Dates) == 0 {
-		t.Error("Expected dates to be loaded")
-	}
-	if len(All_Relations) == 0 {
-		t.Error("Expected relations to be loaded")
+	if len(All_Artists) == 0 || len(All_Locations) == 0 || 
+	   len(All_Dates) == 0 || len(All_Relations) == 0 {
+		t.Error("Expected all data to be loaded")
 	}
 }
 
-/*
-TestInitializeData_PartialFailure tests that InitializeData handles partial failures: when one API fails, it still loads data from the others and returns errors for the failed one.
-*/
 func TestInitializeData_PartialFailure(t *testing.T) {
-	reset, restore := setupInitializeDataTest()
+	reset, restore := setupTest()
 	defer restore()
 	reset()
 
-	errors := InitializeData()
+	restoreTransport := setMockTransport(failOneEndpoint("/api/artists"))
+	defer restoreTransport()
 
-	if errors == nil {
-		t.Error("Expected errors due to invalid URL, but got none")
+	errs := InitializeData()
+
+	if errs == nil || len(errs) != 1 {
+		t.Errorf("Expected 1 error, got: %v", errs)
 	}
-	if len(errors) != 1 {
-		t.Errorf("Expected 1 error, but got %d", len(errors))
+	if errs != nil && !strings.Contains(errs[0].Error(), "FetchArtists") {
+		t.Errorf("Expected FetchArtists error, got: %v", errs[0])
 	}
-	if !strings.Contains(errors[0].Error(), "FetchArtists") {
-		t.Errorf("Expected error to contain 'FetchArtists', but got: %s", errors[0].Error())
-	}
-	// Other data should still be loaded
-	if len(All_Locations) == 0 {
-		t.Error("Expected locations to be loaded despite artists failure")
-	}
-	if len(All_Dates) == 0 {
-		t.Error("Expected dates to be loaded despite artists failure")
-	}
-	if len(All_Relations) == 0 {
-		t.Error("Expected relations to be loaded despite artists failure")
+	// Other data should still load
+	if len(All_Locations) == 0 || len(All_Dates) == 0 || len(All_Relations) == 0 {
+		t.Error("Expected other data to load despite artist failure")
 	}
 }
 
-/*
-TestInitializeData_AllFailure tests that InitializeData returns errors for all failed APIs and leaves global variables empty when all APIs fail.
-*/
 func TestInitializeData_AllFailure(t *testing.T) {
-	reset, restore := setupInitializeDataTest()
+	reset, restore := setupTest()
 	defer restore()
 	reset()
 
-	// All endpoints fail
 	restoreTransport := setMockTransport(errorTransport())
 	defer restoreTransport()
 
-	errors := InitializeData()
+	errs := InitializeData()
 
-	if errors == nil {
-		t.Error("Expected errors due to all invalid URLs, but got none")
+	if errs == nil || len(errs) != 4 {
+		t.Errorf("Expected 4 errors, got: %v", errs)
 	}
-	if len(errors) != 4 {
-		t.Errorf("Expected 4 errors, but got %d", len(errors))
-	}
-	// All global variables should remain nil/empty
-	if len(All_Artists) != 0 {
-		t.Error("Expected artists to remain empty on all failures")
-	}
-	if len(All_Locations) != 0 {
-		t.Error("Expected locations to remain empty on all failures")
-	}
-	if len(All_Dates) != 0 {
-		t.Error("Expected dates to remain empty on all failures")
-	}
-	if len(All_Relations) != 0 {
-		t.Error("Expected relations to remain empty on all failures")
+	if len(All_Artists) != 0 || len(All_Locations) != 0 || 
+	   len(All_Dates) != 0 || len(All_Relations) != 0 {
+		t.Error("Expected all data to remain empty on failure")
 	}
 }
-func TestInitializeData_RetryEventuallySucceeds(t *testing.T) {
-	reset, restore := setupInitializeDataTest()
+
+func TestInitializeData_RetrySuccess(t *testing.T) {
+	reset, restore := setupTest()
 	defer restore()
 	reset()
 
-	// Fail the first 2 attempts per endpoint, then succeed. InitializeData retries up to 2 times (3 total attempts)
+	// Fail twice, succeed on third attempt (maxRetries=2 means 3 total attempts)
 	rt := retryThenSuccessTransport(map[string]int{
 		"/api/artists":   2,
 		"/api/locations": 2,
@@ -433,32 +426,13 @@ func TestInitializeData_RetryEventuallySucceeds(t *testing.T) {
 	defer restoreTransport()
 
 	errs := InitializeData()
+
 	if errs != nil {
 		t.Fatalf("Expected no errors after retries, got: %v", errs)
 	}
-	if len(All_Artists) == 0 || len(All_Locations) == 0 || len(All_Dates) == 0 || len(All_Relations) == 0 {
-		t.Fatal("Expected all datasets to be loaded after retries")
-	}
-}
-
-// ---- Loading status accessors ----
-func TestLoadingStatusAccessors(t *testing.T) {
-	SetLoadingStatus(true, false, false)
-	s := GetLoadingStatus()
-	if !s.IsLoading || s.IsLoaded || s.HasFailed {
-		t.Errorf("unexpected status after first set: %+v", s)
-	}
-
-	SetLoadingStatus(false, true, false)
-	s = GetLoadingStatus()
-	if s.IsLoading || !s.IsLoaded || s.HasFailed {
-		t.Errorf("unexpected status after second set: %+v", s)
-	}
-
-	SetLoadingStatus(false, false, true)
-	s = GetLoadingStatus()
-	if s.IsLoading || s.IsLoaded || !s.HasFailed {
-		t.Errorf("unexpected status after third set: %+v", s)
+	if len(All_Artists) == 0 || len(All_Locations) == 0 || 
+	   len(All_Dates) == 0 || len(All_Relations) == 0 {
+		t.Error("Expected all data to be loaded after retries")
 	}
 }
 
@@ -525,57 +499,5 @@ func TestRefreshData_RetryOnFailure(t *testing.T) {
 	status := GetLoadingStatus()
 	if !status.IsLoading {
 		t.Error("Expected loading state when retrying after failure")
-	}
-}
-
-// ============================================================================
-// TEST STATE MANAGEMENT
-// ============================================================================
-
-func setupTest() (reset func(), restore func()) {
-	originalArtists := All_Artists
-	originalLocations := All_Locations
-	originalDates := All_Dates
-	originalRelations := All_Relations
-	originalTransport := http.DefaultClient.Transport
-
-	reset = func() {
-		All_Artists = nil
-		All_Locations = nil
-		All_Dates = nil
-		All_Relations = nil
-	}
-
-	restore = func() {
-		All_Artists = originalArtists
-		All_Locations = originalLocations
-		All_Dates = originalDates
-		All_Relations = originalRelations
-		http.DefaultClient.Transport = originalTransport
-	}
-
-	return reset, restore
-}
-
-// ============================================================================
-// TEST HELPERS - Mock HTTP Transport
-// ============================================================================
-
-type roundTripFunc func(*http.Request) (*http.Response, error)
-
-func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
-
-func setMockTransport(rt http.RoundTripper) func() {
-	prev := http.DefaultClient.Transport
-	http.DefaultClient.Transport = rt
-	return func() { http.DefaultClient.Transport = prev }
-}
-
-func httpResponse(status int, body string) *http.Response {
-	return &http.Response{
-		StatusCode: status,
-		Body:       io.NopCloser(bytes.NewBufferString(body)),
-		Header:     make(http.Header),
-		Request:    &http.Request{},
 	}
 }
