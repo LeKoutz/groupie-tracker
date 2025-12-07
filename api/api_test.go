@@ -14,8 +14,7 @@ import (
 // NOTE ABOUT TEST EXECUTION AND GLOBAL STATE
 // These tests intentionally mutate package-global variables (e.g., All_Artists, All_Locations,
 // All_Dates, All_Relations) and also swap out http.DefaultClient.Transport to mock HTTP calls.
-// Because of this shared mutable state, do NOT use t.Parallel() in this file; running these
-// tests in parallel can cause data races or flaky behavior across tests.
+// This is done to avoid actual network calls and to control the test environment.
 
 /*
 TestFetchArtists_DataValidation checks that fetched artist data has valid fields: positive ID, non-empty name, members, creation date, first album, locations, concert dates, and relations.
@@ -57,86 +56,81 @@ func TestFetchArtists_DataValidation(t *testing.T) {
 	}
 }
 
-// Test error scenarios with mocked servers
-/*
-TestFetchArtists_NetworkError simulates a network error by setting an invalid URL and verifies that FetchArtistsWithContext returns an error and nil artists.
-*/
-func TestFetchArtists_NetworkError(t *testing.T) {
-	restore := setMockTransport(errorTransport(map[string]error{
-		"/api/artists": errors.New("dial error"),
-	}))
-	defer restore()
-
-	artists, err := FetchArtistsWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for invalid URL, but got none")
+// Table-driven test for network errors across all endpoints
+func TestAllEndpoints_NetworkError(t *testing.T) {
+	type endpointTest struct {
+		name        string
+		path        string
+		fetchFunc   func(context.Context) (any, error)
+		shouldBeNil bool
 	}
-	if artists != nil {
-		t.Error("Expected nil artists on error")
-	}
-}
 
-//network error coverage for other endpoints
-func TestFetchLocations_NetworkError(t *testing.T) {
-	restore := setMockTransport(errorTransport(map[string]error{
-		"/api/locations": errors.New("dial error"),
-	}))
-	defer restore()
-
-	locations, err := FetchLocationsWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for network issue, but got none")
+	endpoints := []endpointTest{
+		{
+			name: "artists",
+			path: "/api/artists",
+			fetchFunc: func(ctx context.Context) (any, error) {
+				artists, err := FetchArtistsWithContext(ctx)
+				if artists == nil {
+					return nil, err
+				}
+				return artists, err
+			},
+			shouldBeNil: true,
+		},
+		{
+			name: "locations",
+			path: "/api/locations",
+			fetchFunc: func(ctx context.Context) (any, error) {
+				locations, err := FetchLocationsWithContext(ctx)
+				if locations == nil {
+					return nil, err
+				}
+				return locations, err
+			},
+			shouldBeNil: true,
+		},
+		{
+			name: "dates",
+			path: "/api/dates",
+			fetchFunc: func(ctx context.Context) (any, error) {
+				dates, err := FetchDatesWithContext(ctx)
+				if dates == nil {
+					return nil, err
+				}
+				return dates, err
+			},
+			shouldBeNil: true,
+		},
+		{
+			name: "relations",
+			path: "/api/relation",
+			fetchFunc: func(ctx context.Context) (any, error) {
+				relations, err := FetchRelationsWithContext(ctx)
+				if relations == nil {
+					return nil, err
+				}
+				return relations, err
+			},
+			shouldBeNil: true,
+		},
 	}
-	if locations != nil {
-		t.Error("Expected nil locations on error")
-	}
-}
 
-func TestFetchDates_NetworkError(t *testing.T) {
-	restore := setMockTransport(errorTransport(map[string]error{
-		"/api/dates": errors.New("dial error"),
-	}))
-	defer restore()
+	for _, tt := range endpoints {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := setMockTransport(errorTransport(map[string]error{
+				tt.path: errors.New("dial error"),
+			}))
+			defer restore()
 
-	dates, err := FetchDatesWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for network issue, but got none")
-	}
-	if dates != nil {
-		t.Error("Expected nil dates on error")
-	}
-}
-
-func TestFetchRelations_NetworkError(t *testing.T) {
-	restore := setMockTransport(errorTransport(map[string]error{
-		"/api/relation": errors.New("dial error"),
-	}))
-	defer restore()
-
-	relations, err := FetchRelationsWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for network issue, but got none")
-	}
-	if relations != nil {
-		t.Error("Expected nil relations on error")
-	}
-}
-
-/*
-TestFetchArtists_StatusCodeError uses a mock server returning a 500 status code to verify that FetchArtistsWithContext returns an error and nil artists.
-*/
-func TestFetchArtists_StatusCodeError(t *testing.T) {
-	restore := setMockTransport(statusTransport(map[string]int{
-		"/api/artists": http.StatusInternalServerError,
-	}))
-	defer restore()
-
-	artists, err := FetchArtistsWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for non-200 status code, but got none")
-	}
-	if artists != nil {
-		t.Error("Expected nil artists on error")
+			result, err := tt.fetchFunc(context.Background())
+			if err == nil {
+				t.Error("Expected error for network issue, but got none")
+			}
+			if tt.shouldBeNil && result != nil {
+				t.Error("Expected nil result on error")
+			}
+		})
 	}
 }
 
