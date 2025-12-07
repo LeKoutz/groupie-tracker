@@ -133,6 +133,62 @@ func TestAllEndpoints_NetworkError(t *testing.T) {
 		})
 	}
 }
+func TestAllEndpoints_StatusCodeError(t *testing.T) {
+	type endpointTest struct {
+		name       string
+		path       string
+		statusCode int
+		fetchFunc  func(context.Context) (any, error)
+	}
+
+	endpoints := []endpointTest{
+		{"artists", "/api/artists", http.StatusInternalServerError, func(ctx context.Context) (any, error) {
+			artists, err := FetchArtistsWithContext(ctx)
+			if artists == nil {
+				return nil, err
+			}
+			return artists, err
+		}},
+		{"locations", "/api/locations", http.StatusNotFound, func(ctx context.Context) (any, error) {
+			locations, err := FetchLocationsWithContext(ctx)
+			if locations == nil {
+				return nil, err
+			}
+			return locations, err
+		}},
+		{"dates", "/api/dates", http.StatusBadRequest, func(ctx context.Context) (any, error) {
+			dates, err := FetchDatesWithContext(ctx)
+			if dates == nil {
+				return nil, err
+			}
+			return dates, err
+		}},
+		{"relations", "/api/relation", http.StatusForbidden, func(ctx context.Context) (any, error) {
+			relations, err := FetchRelationsWithContext(ctx)
+			if relations == nil {
+				return nil, err
+			}
+			return relations, err
+		}},
+	}
+
+	for _, tt := range endpoints {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := setMockTransport(statusTransport(map[string]int{
+				tt.path: tt.statusCode,
+			}))
+			defer restore()
+
+			result, err := tt.fetchFunc(context.Background())
+			if err == nil {
+				t.Errorf("Expected error for status code %d, but got none", tt.statusCode)
+			}
+			if result != nil {
+				t.Error("Expected nil result on error")
+			}
+		})
+	}
+}
 
 /*
 TestFetchArtists_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchArtistsWithContext returns a decode error and nil artists.
@@ -149,24 +205,6 @@ func TestFetchArtists_JSONDecodeError(t *testing.T) {
 	}
 	if artists != nil {
 		t.Error("Expected nil artists on error")
-	}
-}
-
-/*
-TestFetchLocations_StatusCodeError uses a mock server returning a 404 status code to verify that FetchLocationsWithContext returns an error and nil locations.
-*/
-func TestFetchLocations_StatusCodeError(t *testing.T) {
-	restore := setMockTransport(statusTransport(map[string]int{
-		"/api/locations": http.StatusNotFound,
-	}))
-	defer restore()
-
-	locations, err := FetchLocationsWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for non-200 status code, but got none")
-	}
-	if locations != nil {
-		t.Error("Expected nil locations on error")
 	}
 }
 
@@ -390,24 +428,6 @@ func TestInitializeData_RetryEventuallySucceeds(t *testing.T) {
 }
 
 /*
-TestFetchDates_StatusCodeError uses a mock server returning a 400 status code to verify that FetchDatesWithContext returns an error and nil dates.
-*/
-func TestFetchDates_StatusCodeError(t *testing.T) {
-	restore := setMockTransport(statusTransport(map[string]int{
-		"/api/dates": http.StatusBadRequest,
-	}))
-	defer restore()
-
-	dates, err := FetchDatesWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for non-200 status code, but got none")
-	}
-	if dates != nil {
-		t.Error("Expected nil dates on error")
-	}
-}
-
-/*
 TestFetchDates_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchDatesWithContext returns a decode error and nil dates.
 */
 func TestFetchDates_JSONDecodeError(t *testing.T) {
@@ -422,24 +442,6 @@ func TestFetchDates_JSONDecodeError(t *testing.T) {
 	}
 	if dates != nil {
 		t.Error("Expected nil dates on error")
-	}
-}
-
-/*
-TestFetchRelations_StatusCodeError uses a mock server returning a 403 status code to verify that FetchRelationsWithContext returns an error and nil relations.
-*/
-func TestFetchRelations_StatusCodeError(t *testing.T) {
-	restore := setMockTransport(statusTransport(map[string]int{
-		"/api/relation": http.StatusForbidden,
-	}))
-	defer restore()
-
-	relations, err := FetchRelationsWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for non-200 status code, but got none")
-	}
-	if relations != nil {
-		t.Error("Expected nil relations on error")
 	}
 }
 
