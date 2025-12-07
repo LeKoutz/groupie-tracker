@@ -16,6 +16,17 @@ import (
 // All_Dates, All_Relations) and also swap out http.DefaultClient.Transport to mock HTTP calls.
 // This is done to avoid actual network calls and to control the test environment.
 
+// helper function
+func wrapFetchFunc[T any](fetchFunc func(context.Context) (T, error)) func(context.Context) (any, error) {
+	return func(ctx context.Context) (any, error) {
+		result, err := fetchFunc(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return result, err
+	}
+}
+
 /*
 TestFetchArtists_DataValidation checks that fetched artist data has valid fields: positive ID, non-empty name, members, creation date, first album, locations, concert dates, and relations.
 */
@@ -57,7 +68,7 @@ func TestFetchArtists_DataValidation(t *testing.T) {
 }
 
 // Table-driven test for network errors across all endpoints
-func TestAllEndpoints_NetworkError(t *testing.T) {
+func TestAllEndpoints_NetworkErrors(t *testing.T) {
 	type endpointTest struct {
 		name        string
 		path        string
@@ -66,56 +77,12 @@ func TestAllEndpoints_NetworkError(t *testing.T) {
 	}
 
 	endpoints := []endpointTest{
-		{
-			name: "artists",
-			path: "/api/artists",
-			fetchFunc: func(ctx context.Context) (any, error) {
-				artists, err := FetchArtistsWithContext(ctx)
-				if artists == nil {
-					return nil, err
-				}
-				return artists, err
-			},
-			shouldBeNil: true,
-		},
-		{
-			name: "locations",
-			path: "/api/locations",
-			fetchFunc: func(ctx context.Context) (any, error) {
-				locations, err := FetchLocationsWithContext(ctx)
-				if locations == nil {
-					return nil, err
-				}
-				return locations, err
-			},
-			shouldBeNil: true,
-		},
-		{
-			name: "dates",
-			path: "/api/dates",
-			fetchFunc: func(ctx context.Context) (any, error) {
-				dates, err := FetchDatesWithContext(ctx)
-				if dates == nil {
-					return nil, err
-				}
-				return dates, err
-			},
-			shouldBeNil: true,
-		},
-		{
-			name: "relations",
-			path: "/api/relation",
-			fetchFunc: func(ctx context.Context) (any, error) {
-				relations, err := FetchRelationsWithContext(ctx)
-				if relations == nil {
-					return nil, err
-				}
-				return relations, err
-			},
-			shouldBeNil: true,
-		},
+		{"artists", "/api/artists", wrapFetchFunc(FetchArtistsWithContext), true},
+		{"locations", "/api/locations", wrapFetchFunc(FetchLocationsWithContext), true},
+		{"dates", "/api/dates", wrapFetchFunc(FetchDatesWithContext), true},
+		{"relations", "/api/relation", wrapFetchFunc(FetchRelationsWithContext), true},
 	}
-
+	
 	for _, tt := range endpoints {
 		t.Run(tt.name, func(t *testing.T) {
 			restore := setMockTransport(errorTransport(map[string]error{
@@ -133,7 +100,7 @@ func TestAllEndpoints_NetworkError(t *testing.T) {
 		})
 	}
 }
-func TestAllEndpoints_StatusCodeError(t *testing.T) {
+func TestAllEndpoints_StatusCodeErrors(t *testing.T) {
 	type endpointTest struct {
 		name       string
 		path       string
@@ -142,34 +109,10 @@ func TestAllEndpoints_StatusCodeError(t *testing.T) {
 	}
 
 	endpoints := []endpointTest{
-		{"artists", "/api/artists", http.StatusInternalServerError, func(ctx context.Context) (any, error) {
-			artists, err := FetchArtistsWithContext(ctx)
-			if artists == nil {
-				return nil, err
-			}
-			return artists, err
-		}},
-		{"locations", "/api/locations", http.StatusNotFound, func(ctx context.Context) (any, error) {
-			locations, err := FetchLocationsWithContext(ctx)
-			if locations == nil {
-				return nil, err
-			}
-			return locations, err
-		}},
-		{"dates", "/api/dates", http.StatusBadRequest, func(ctx context.Context) (any, error) {
-			dates, err := FetchDatesWithContext(ctx)
-			if dates == nil {
-				return nil, err
-			}
-			return dates, err
-		}},
-		{"relations", "/api/relation", http.StatusForbidden, func(ctx context.Context) (any, error) {
-			relations, err := FetchRelationsWithContext(ctx)
-			if relations == nil {
-				return nil, err
-			}
-			return relations, err
-		}},
+		{"artists", "/api/artists", http.StatusInternalServerError, wrapFetchFunc(FetchArtistsWithContext)},
+		{"locations", "/api/locations", http.StatusNotFound, wrapFetchFunc(FetchLocationsWithContext)},
+		{"dates", "/api/dates", http.StatusBadRequest, wrapFetchFunc(FetchDatesWithContext)},
+		{"relations", "/api/relation", http.StatusForbidden, wrapFetchFunc(FetchRelationsWithContext)},
 	}
 
 	for _, tt := range endpoints {
@@ -190,60 +133,36 @@ func TestAllEndpoints_StatusCodeError(t *testing.T) {
 	}
 }
 
-func TestAllEndpoints_JSONDecodeError(t *testing.T) {
-    type endpointTest struct {
-        name     string
-        path     string
-        fetchFunc func(context.Context) (any, error)
-    }
+func TestAllEndpoints_JSONDecodeErrors(t *testing.T) {
+	type endpointTest struct {
+		name      string
+		path      string
+		fetchFunc func(context.Context) (any, error)
+	}
 
-    endpoints := []endpointTest{
-        {"artists", "/api/artists", func(ctx context.Context) (any, error) {
-            artists, err := FetchArtistsWithContext(ctx)
-            if artists == nil {
-                return nil, err
-            }
-            return artists, err
-        }},
-        {"locations", "/api/locations", func(ctx context.Context) (any, error) {
-            locations, err := FetchLocationsWithContext(ctx)
-			if locations == nil {
-				return nil, err
+	endpoints := []endpointTest{
+		{"artists", "/api/artists", wrapFetchFunc(FetchArtistsWithContext)},
+		{"locations", "/api/locations", wrapFetchFunc(FetchLocationsWithContext)},
+		{"dates", "/api/dates", wrapFetchFunc(FetchDatesWithContext)},
+		{"relations", "/api/relation", wrapFetchFunc(FetchRelationsWithContext)},
+	}
+
+	for _, tt := range endpoints {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := setMockTransport(bodyTransport(map[string]mockBody{
+				tt.path: {status: http.StatusOK, body: "invalid json"},
+			}))
+			defer restore()
+
+			result, err := tt.fetchFunc(context.Background())
+			if err == nil {
+				t.Error("Expected error for invalid JSON, but got none")
 			}
-			return locations, err
-        }},
-        {"dates", "/api/dates", func(ctx context.Context) (any, error) {
-            dates, err := FetchDatesWithContext(ctx)
-			if dates == nil {
-                return nil, err
-            }
-			return dates, err
-        }},
-        {"relations", "/api/relation", func(ctx context.Context) (any, error) {
-            relations, err := FetchRelationsWithContext(ctx)
-			if relations == nil {
-				return nil, err
+			if result != nil {
+				t.Error("Expected nil result on error")
 			}
-			return relations, err
-        }},
-    }
-
-    for _, tt := range endpoints {
-        t.Run(tt.name, func(t *testing.T) {
-            restore := setMockTransport(bodyTransport(map[string]mockBody{
-                tt.path: {status: http.StatusOK, body: "invalid json"},
-            }))
-            defer restore()
-
-            result, err := tt.fetchFunc(context.Background())
-            if err == nil {
-                t.Error("Expected error for invalid JSON, but got none")
-            }
-            if result != nil {
-                t.Error("Expected nil result on error")
-            }
-        })
-    }
+		})
+	}
 }
 
 /*
