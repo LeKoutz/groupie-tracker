@@ -190,40 +190,60 @@ func TestAllEndpoints_StatusCodeError(t *testing.T) {
 	}
 }
 
-/*
-TestFetchArtists_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchArtistsWithContext returns a decode error and nil artists.
-*/
-func TestFetchArtists_JSONDecodeError(t *testing.T) {
-	restore := setMockTransport(bodyTransport(map[string]mockBody{
-		"/api/artists": {status: http.StatusOK, body: "invalid json"},
-	}))
-	defer restore()
+func TestAllEndpoints_JSONDecodeError(t *testing.T) {
+    type endpointTest struct {
+        name     string
+        path     string
+        fetchFunc func(context.Context) (any, error)
+    }
 
-	artists, err := FetchArtistsWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for invalid JSON, but got none")
-	}
-	if artists != nil {
-		t.Error("Expected nil artists on error")
-	}
-}
+    endpoints := []endpointTest{
+        {"artists", "/api/artists", func(ctx context.Context) (any, error) {
+            artists, err := FetchArtistsWithContext(ctx)
+            if artists == nil {
+                return nil, err
+            }
+            return artists, err
+        }},
+        {"locations", "/api/locations", func(ctx context.Context) (any, error) {
+            locations, err := FetchLocationsWithContext(ctx)
+			if locations == nil {
+				return nil, err
+			}
+			return locations, err
+        }},
+        {"dates", "/api/dates", func(ctx context.Context) (any, error) {
+            dates, err := FetchDatesWithContext(ctx)
+			if dates == nil {
+                return nil, err
+            }
+			return dates, err
+        }},
+        {"relations", "/api/relation", func(ctx context.Context) (any, error) {
+            relations, err := FetchRelationsWithContext(ctx)
+			if relations == nil {
+				return nil, err
+			}
+			return relations, err
+        }},
+    }
 
-/*
-TestFetchLocations_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchLocationsWithContext returns a decode error and nil locations.
-*/
-func TestFetchLocations_JSONDecodeError(t *testing.T) {
-	restore := setMockTransport(bodyTransport(map[string]mockBody{
-		"/api/locations": {status: http.StatusOK, body: "invalid json"},
-	}))
-	defer restore()
+    for _, tt := range endpoints {
+        t.Run(tt.name, func(t *testing.T) {
+            restore := setMockTransport(bodyTransport(map[string]mockBody{
+                tt.path: {status: http.StatusOK, body: "invalid json"},
+            }))
+            defer restore()
 
-	locations, err := FetchLocationsWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for invalid JSON, but got none")
-	}
-	if locations != nil {
-		t.Error("Expected nil locations on error")
-	}
+            result, err := tt.fetchFunc(context.Background())
+            if err == nil {
+                t.Error("Expected error for invalid JSON, but got none")
+            }
+            if result != nil {
+                t.Error("Expected nil result on error")
+            }
+        })
+    }
 }
 
 /*
@@ -424,42 +444,6 @@ func TestInitializeData_RetryEventuallySucceeds(t *testing.T) {
 	}
 	if len(All_Artists) == 0 || len(All_Locations) == 0 || len(All_Dates) == 0 || len(All_Relations) == 0 {
 		t.Fatal("Expected all datasets to be loaded after retries")
-	}
-}
-
-/*
-TestFetchDates_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchDatesWithContext returns a decode error and nil dates.
-*/
-func TestFetchDates_JSONDecodeError(t *testing.T) {
-	restore := setMockTransport(bodyTransport(map[string]mockBody{
-		"/api/dates": {status: http.StatusOK, body: "invalid json"},
-	}))
-	defer restore()
-
-	dates, err := FetchDatesWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for invalid JSON, but got none")
-	}
-	if dates != nil {
-		t.Error("Expected nil dates on error")
-	}
-}
-
-/*
-TestFetchRelations_JSONDecodeError uses a mock server returning invalid JSON to verify that FetchRelationsWithContext returns a decode error and nil relations.
-*/
-func TestFetchRelations_JSONDecodeError(t *testing.T) {
-	restore := setMockTransport(bodyTransport(map[string]mockBody{
-		"/api/relation": {status: http.StatusOK, body: "invalid json"},
-	}))
-	defer restore()
-
-	relations, err := FetchRelationsWithContext(context.Background())
-	if err == nil {
-		t.Error("Expected error for invalid JSON, but got none")
-	}
-	if relations != nil {
-		t.Error("Expected nil relations on error")
 	}
 }
 
