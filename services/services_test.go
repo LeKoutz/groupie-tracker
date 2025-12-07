@@ -1,6 +1,7 @@
 package services
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -145,5 +146,46 @@ func TestDateNewer(t *testing.T) {
 		if got := dateNewer(tt.a, tt.b); got != tt.want {
 			t.Errorf("dateNewer(%q, %q) = %v, want %v", tt.a, tt.b, got, tt.want)
 		}
+	}
+}
+
+func TestSortDatesInLocations(t *testing.T) {
+	r := &models.Relations{
+		DatesLocations: map[string][]string{
+			"loc1": {"01-01-2020", "02-01-2021", "bad-date", "15-02-2019"},
+			"loc2": {"bad"},
+			"loc3": {"03-03-2022", "01-01-2020"},
+		},
+	}
+
+	sortDatesInLocations(r)
+
+	want1 := []string{"02-01-2021", "01-01-2020", "15-02-2019", "bad-date"}
+	if !reflect.DeepEqual(r.DatesLocations["loc1"], want1) {
+		t.Errorf("loc1 = %v, want %v", r.DatesLocations["loc1"], want1)
+	}
+
+	want3 := []string{"03-03-2022", "01-01-2020"}
+	if !reflect.DeepEqual(r.DatesLocations["loc3"], want3) {
+		t.Errorf("loc3 = %v, want %v", r.DatesLocations["loc3"], want3)
+	}
+}
+
+func TestSortLocationsByDate(t *testing.T) {
+	r := &models.Relations{
+		DatesLocations: map[string][]string{
+			"Location A": {"01-01-2020"},
+			"Location B": {"15-06-2021"},
+			"Location C": {},
+		},
+	}
+
+	sortLocationsByDate(r)
+
+	if len(r.SortedLocations) != 2 {
+		t.Errorf("Expected 2 locations (C has no dates), got %d", len(r.SortedLocations))
+	}
+	if r.SortedLocations[0] != "Location B" {
+		t.Errorf("Expected Location B first (newest), got %s", r.SortedLocations[0])
 	}
 }
