@@ -1,3 +1,17 @@
+@font-face {
+  font-family: 'HeaderFont';
+  src: url('/static/fonts/Lovira.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'QuestrialLocal';
+  src: url('/static/fonts/Questrial.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 body {
   margin: 0;
   height: 100vh;
@@ -7,7 +21,7 @@ body {
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'QuestrialLocal', sans-serif;
 }
 
 /* Center container */
@@ -17,9 +31,13 @@ body {
 
 /* Title styling */
 .loading-container h1 {
+  font-family: 'HeaderFont', sans-serif;
   color: #97CE4C;
   margin-bottom: 40px;
   font-size: 2.5em;
+  text-shadow: 0 0 12px rgba(151, 206, 76, 0.9),
+               0 0 20px rgba(151, 206, 76, 0.6);
+  animation: neonFlickerGreen 5s infinite;
 }
 
 /* Dots animation */
@@ -53,4 +71,17 @@ body {
 .loading-container p {
   color: #ccc;
   font-size: 1.1em;
+}
+
+@keyframes neonFlickerGreen {
+  0%, 15%, 25%, 45%, 55%, 75%, 100% { 
+    text-shadow: 0 0 12px rgba(151, 206, 76, 0.9),
+                 0 0 20px rgba(151, 206, 76, 0.6);
+  }
+  16% { text-shadow: 0 0 4px rgba(151, 206, 76, 0.4); }
+  17.5% { text-shadow: 0 0 14px rgba(151, 206, 76, 1); }
+  46% { text-shadow: 0 0 6px rgba(151, 206, 76, 0.25); }
+  47.2% { text-shadow: 0 0 14px rgba(151, 206, 76, 1); }
+  56% { text-shadow: 0 0 6px rgba(151, 206, 76, 0.5); }
+  57% { text-shadow: 0 0 14px rgba(151, 206, 76, 1); }
 }
