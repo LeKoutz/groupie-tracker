@@ -28,7 +28,13 @@
                     </section>
 
                     <section class="card-info">
-                        <p><strong>Members:</strong> {{len .Members}}</p>
+                        <p><strong>Members:</strong>
+                        {{ if eq (len .Members) 1 }}
+                            Solo
+                        {{ else }}
+                            {{ len .Members }}
+                        {{ end }}
+                        </p>
                         <p><strong>Start Year:</strong> {{.CreationDate}}</p>
                         <p><strong>First Release:</strong> {{.FirstAlbum}}</p>
                         <a href="/artist/{{.ID}}" class="green-button">More Info →</a>
