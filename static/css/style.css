@@ -72,7 +72,7 @@ a:hover {
 
    /* HEADER */
 header {
-    position: fixed;
+    position: relative;
     top: 0;
     left: 0;
     right: 0;
@@ -126,7 +126,7 @@ header nav a {
 
 /* FOOTER */
 footer {
-    position: fixed;
+    position: relative;
     bottom: 0;
     left: 0;
     right: 0;
