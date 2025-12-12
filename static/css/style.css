@@ -219,7 +219,7 @@ header, footer {
 
 /* CARD CONTENT */
 .card-content {
-    padding: 12px 16px;
+    padding: 8px 12px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -228,7 +228,7 @@ header, footer {
 /* BAND INFO */
 .band-info h3 {
     margin: 0 0 8px 0;
-    font-size: 1.2em;
+    font-size: 1em;
     font-weight: 600;
     color: #f7f7f7;
     letter-spacing: 0.5px;
@@ -311,13 +311,6 @@ header, footer {
     display: block;
 
 }
-
-/*
-.artist-image:hover {
-    box-shadow: 0 12px 25px rgba(151, 206, 76, 0.6);
-}
-*/
-
 .artist-info-text .artist-labels:first-of-type {
     margin-top: 0;
 }
@@ -388,7 +381,7 @@ header, footer {
 }
 
 /* MEDIA QUERY */
-@media (max-width: 900px) {
+@media (max-width: 900px) { /* desktop */
     .artist-layout {
         flex-direction: column;
     }
@@ -397,6 +390,37 @@ header, footer {
     }
     .artist-card {
         height: auto;
+    }
+@media (max-width: 768px) { /* tablet */
+    .artist-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.8rem;
+    }
+    .artist-layout {
+        flex-direction: column;
+    }
+    .artist-image {
+        max-width: 100%;
+    }
+    .artist-card {
+        max-width: 200px;
+    }
+}
+@media (max-width: 480px) { /* mobile */
+    .artist-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.6rem;
+    }
+    .green-button, .back-button {
+        padding: 6px 12px;
+        font-size: 0.9em;
+    }
+    header h1{
+        font-size: 1.5em;
+    }
+    .artist-card {
+        max-width: 160px;
+    }
     }
 }
 
