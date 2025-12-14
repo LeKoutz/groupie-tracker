@@ -1,0 +1,61 @@
+# Groupie Tracker
+
+A web application that displays information about your favorite artists and bands by fetching data from multiple API endpoints.
+
+## Features
+
+- View artist and band information
+- Display concert locations and dates
+- Show band members and formation dates
+
+## Tech Stack
+
+- **Backend**: Go
+- **Frontend**: HTML/CSS
+- **Deployment**: Railway
+
+## Project Structure
+
+```
+groupie-tracker/
+├── api/           # API client logic
+├── handlers/      # HTTP request handlers
+├── models/        # Data structures
+├── services/      # Business logic
+├── static/        # CSS and static assets
+├── templates/     # HTML templates
+└── main.go        # Application entry point
+```
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://platform.zone01.gr/git/gkoutzos/groupie-tracker.git
+cd groupie-tracker
+```
+
+2. Run the application:
+```bash
+go run main.go
+```
+
+3. Open your browser and navigate to `http://localhost:8080` (or whatever port is set in your PORT environment variable)
+
+## Live Demo
+
+Check out the [live](https://groupie-tracker-production-e666.up.railway.app/) application
+
+## Usage
+
+Simply browse through the artists displayed on the homepage and click on any artist to view their detailed information including concert dates, locations, and band members.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributors
+
+- [gkoutzos](https://platform.zone01.gr/git/gkoutzos)
+- [ttsopani](https://platform.zone01.gr/git/ttsopani)
+- [cktistak](https://platform.zone01.gr/git/cktistak)
