@@ -23,8 +23,14 @@ body, h1, h2, h3, p, a {
     -moz-osx-font-smoothing: grayscale;
 }
 
+:root {
+    --header-height: 80px;
+    --footer-height: 40px;
+}
+
 /* HTML */
 html {
+    height: 100%;
     overflow-y: scroll;
 }
 
@@ -33,12 +39,20 @@ body {
     font-family: 'QuestrialLocal', sans-serif;
     margin: 0;
     padding: 0;
-    background: linear-gradient(145deg, #1c1f28, #252836);
     color: #e0e0e0;
     width: 100%;
+    display: flex;
+    flex-direction: column;
     min-height: 100vh;
-    overflow-x: hidden;
     transition: background 0.3s ease;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(145deg, #1c1f28, #252836);
 }
 
 /* MAIN */
@@ -61,8 +75,8 @@ a:hover {
 }
 
 .inline-info {
-  display: inline;
-  margin-left: 6px;
+    display: inline;
+    margin-left: 6px;
 }
 
 
@@ -72,23 +86,27 @@ a:hover {
 
    /* HEADER */
 header {
-    position: relative;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    z-index: 100;
+    z-index: 1000;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    box-sizing: border-box;
     background: rgba(20, 27, 35, 0.85);
-    backdrop-filter: blur(5px);
-    color: white;
-    padding: 15px 0;
-    text-align: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border-bottom: 1px solid #97CE4C;
-    transition: background 0.3s ease, border-color 0.3s ease;
 }
+
 
 /* HEADER TITLE */
 header h1 {
-    margin: 0 auto;
+    margin: 0;
     font-size: 2.5em;
     color: #97CE4C;
     display: inline-block;
@@ -126,27 +144,31 @@ header nav a {
 
 /* FOOTER */
 footer {
-    position: relative;
-    bottom: 0;
+    position: fixed;
     left: 0;
     right: 0;
-    padding: 20px 0;
-    text-align: center;
+    bottom: 0;
+    z-index: 1000;
+    height: calc(var(--footer-height) + env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
     background: rgba(20, 27, 35, 0.85);
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: #97CE4C;
     border-top: 1px solid #97CE4C;
 }
+
 footer p {
     margin: 0;
     font-size: 0.9em;
+    text-align: center;
+    width: 100%;
 }
-
-header, footer {
-    padding-left: 20px;
-    padding-right: 20px;
-}
-
 
 /* ========================================
    HOME PAGE
@@ -154,9 +176,10 @@ header, footer {
 
 /* ARTIST MAIN */
 .artist-main {
-    padding: 30px 20px;
-    margin-top: 80px;
-    padding-bottom: 80px;
+    padding-top: calc(var(--header-height) + env(safe-area-inset-top) + 30px);
+    padding-right: 20px;
+    padding-bottom: calc(var(--footer-height) + env(safe-area-inset-bottom) + 30px);
+    padding-left: 20px;
     display: flex;
     justify-content: center;
     box-sizing: border-box;
@@ -254,11 +277,6 @@ header, footer {
     font-size: 0.9em;
     transition: all 0.3s ease;
 }
-.green-button:hover {
-    background-color: #97CE4C;
-    color: #20232A;
-    box-shadow: 0 0 10px #97CE4C, 0 0 20px #97CE4C;
-}
 
 /* ========================================
    ARTIST PAGE
@@ -327,7 +345,6 @@ header, footer {
     font-size: 2em;
     color: #f7f7f7;
     letter-spacing: 1px;
-    white-space:nowrap;
 }
 
 /* MEMBERS / INFO LIST */
@@ -336,7 +353,6 @@ header, footer {
     font-size: 0.95em;
     color: #f7f7f7;
     margin: 5px 0;
-    white-space: nowrap;
 }
 
 /* FOUNDED / FIRST ALBUM */
@@ -376,21 +392,34 @@ header, footer {
 }
 
 .artist-date-loca li {
-    white-space: nowrap;
     margin-bottom: 5px;
+}
+
+.artist-info-text h2,
+.artist-info-text p,
+.artist-info-text li,
+.artist-date-loca li {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* MEDIA QUERY */
 @media (max-width: 900px) { /* desktop */
-    .artist-layout {
+    .artist-layout { 
         flex-direction: column;
+        gap: 16px;
     }
-    .artist-image {
-        max-width: 320px;
+    .artist-image { 
+        max-width: 320px; 
     }
-    .artist-card {
-        height: auto;
+    .artist-card { 
+        height: auto; 
     }
+    .artist-date-loca {
+    margin-top: 0;
+  }
+}
+
 @media (max-width: 768px) { /* tablet */
     .artist-grid {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -402,10 +431,8 @@ header, footer {
     .artist-image {
         max-width: 100%;
     }
-    .artist-card {
-        max-width: 200px;
-    }
 }
+
 @media (max-width: 480px) { /* mobile */
     .artist-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -418,10 +445,6 @@ header, footer {
     header h1{
         font-size: 1.5em;
     }
-    .artist-card {
-        max-width: 160px;
-    }
-    }
 }
 
 /* ========================================
@@ -430,9 +453,11 @@ header, footer {
 
 /* ERROR PAGE LAYOUT */
 .error-main {
-    min-height: calc(100vh - 160px);
-    margin-top: 80px;
-    padding-bottom: 80px;
+    padding-top: calc(var(--header-height) + env(safe-area-inset-top));
+    padding-right: 20px;
+    padding-bottom: calc(var(--footer-height) + env(safe-area-inset-bottom));
+    padding-left: 20px;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
