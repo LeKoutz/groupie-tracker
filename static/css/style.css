@@ -397,7 +397,7 @@ margin: 5px 0;
 }
 
 .artist-meta p {
-    margin-top: 20px;
+    margin-top: 15px;
 }
 
 .artist-meta p:last-child {
@@ -480,6 +480,14 @@ margin: 5px 0;
     }
     .green-button, .back-button {
         padding: 6px 12px;
+    }
+    footer {
+        height: auto;
+        padding: 4px 10px;
+    }
+    footer p {
+        font-size: 0.7rem;
+        line-height: 1.2;
     }
 }
 
