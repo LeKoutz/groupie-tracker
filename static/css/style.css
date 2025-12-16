@@ -26,6 +26,9 @@ body, h1, h2, h3, p, a {
 :root {
     --header-height: 80px;
     --footer-height: 40px;
+    --fs-title: clamp(1.5rem, 2.5vw, 2rem);
+    --fs-body: clamp(0.9rem, 1.6vw, 1rem);
+    --fs-small: clamp(0.85rem, 1.4vw, 0.95rem);
 }
 
 /* HTML */
@@ -79,6 +82,10 @@ a:hover {
     margin-left: 6px;
 }
 
+p,
+li {
+    font-size: var(--fs-body);
+}
 
 /* ========================================
    HEADER & FOOTER
@@ -107,7 +114,7 @@ header {
 /* HEADER TITLE */
 header h1 {
     margin: 0;
-    font-size: 2.5em;
+    font-size: clamp(1.2rem, 4vw, 2.5rem);
     color: #97CE4C;
     display: inline-block;
     font-family: 'HeaderFont', sans-serif;
@@ -165,10 +172,16 @@ footer {
 
 footer p {
     margin: 0;
-    font-size: 0.9em;
     text-align: center;
     width: 100%;
 }
+
+.green-button,
+.back-button,
+footer p {
+    font-size: var(--fs-small);
+}
+
 
 /* ========================================
    HOME PAGE
@@ -251,16 +264,16 @@ footer p {
 /* BAND INFO */
 .band-info h3 {
     margin: 0 0 8px 0;
-    font-size: 1em;
     font-weight: 600;
-    color: #f7f7f7;
+    font-size: clamp(1.05rem, 1.8vw, 1.15rem);
+    color: #97CE4C;
     letter-spacing: 0.5px;
 }
 
 /* CARD INFO */
 .card-info p {
     margin: 4px 0;
-    font-size: 0.95em;
+    font-size: var(--fs-body);
     color: #e5e5e5;
 }
 
@@ -274,7 +287,6 @@ footer p {
     color: #97CE4C;
     background-color: rgba(20, 27, 35, 0.8);
     text-decoration: none;
-    font-size: 0.9em;
     transition: all 0.3s ease;
 }
 
@@ -300,7 +312,6 @@ footer p {
     color: #97CE4C;
     background-color: rgba(20, 27, 35, 0.8);
     text-decoration: none;
-    font-size: 0.9em;
     transition: all 0.3s ease;
 }
 .back-button:hover {
@@ -311,55 +322,86 @@ footer p {
 
 /* ARTIST LAYOUT */
 .artist-layout {
-    display: flex;
-    gap: 30px;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    align-items: start;
 }
+
+/* ARTIST PAGE PANELS */
+.artist-panel {
+    background: rgba(60, 62, 68, 0.85);
+    border-radius: 12px;
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+    padding: 12px 14px;
+}
+
+.artist-panel ul {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.artist-panel > :first-child {
+margin-top: 0;
+}
+
+.artist-panel > :last-child {
+margin-bottom: 0;
+}
+
+.artist-panel p {
+margin: 5px 0;
+}
+
+.artist-left {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.artist-title h2 {
+    margin: 0;
+    font-size: var(--fs-title);
+    line-height: 1.1;
+    word-break: break-word;
+}
+
 
 /* IMAGE */
 .artist-image {
-    flex: 0 0 300px;
     border-radius: 12px;
     overflow: hidden;
-    transition: box-shadow 0.3s ease;
 }
+
 .artist-image img {
     width: 100%;
     height: auto;
     display: block;
 
 }
+
 .artist-info-text .artist-labels:first-of-type {
     margin-top: 0;
 }
 
 /* INFO TEXT */
 .artist-info-text {
-    flex: 1 1 400px;
-}
-
-/* BAND NAME */
-.artist-info-text h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 2em;
-    color: #f7f7f7;
-    letter-spacing: 1px;
-}
-
-/* MEMBERS / INFO LIST */
-.artist-info-text p,
-.artist-info-text li {
-    font-size: 0.95em;
-    color: #f7f7f7;
-    margin: 5px 0;
+    min-width: 0;
 }
 
 /* FOUNDED / FIRST ALBUM */
 .artist-info-text p {
     display: flex;
     align-items: center;
-    margin-top: 30px;
+}
+
+.artist-meta p {
+    margin-top: 20px;
+}
+
+.artist-meta p:last-child {
+margin-bottom: 0;
 }
 
 .artist-info-text ul {
@@ -371,9 +413,9 @@ footer p {
 .artist-labels {
     color: #97CE4C;
     font-weight: 600;
-    font-size: 1em;
+    font-size: clamp(0.85rem, 3vw, 1em);
     margin-top: 16px;
-    margin-right: 2px;
+    margin-right: 0px;
     display: inline-block;
 }
 
@@ -381,9 +423,12 @@ footer p {
 .artist-date-loca {
     color: #f7f7f7;
     font-weight: 400;
-    font-size: 0.95em;
-    flex: 1 1 400px;
-    margin-top: 32px;
+    margin-top: 0;
+    min-width: 0;
+}
+
+.artist-date-loca p {
+margin: 5px 0;
 }
 
 .artist-date-loca ul {
@@ -395,41 +440,36 @@ footer p {
     margin-bottom: 5px;
 }
 
+.artist-date-loca .artist-labels {
+    margin-top: 0;
+}
+
 .artist-info-text h2,
 .artist-info-text p,
 .artist-info-text li,
 .artist-date-loca li {
-  white-space: normal;
-  overflow-wrap: anywhere;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 /* MEDIA QUERY */
-@media (max-width: 900px) { /* desktop */
+@media (max-width: 1024px) { /* desktop */
     .artist-layout { 
-        flex-direction: column;
+        grid-template-columns: 1fr;
         gap: 16px;
+    }
+    .artist-title h2 {
+        text-align: center;
+    }
+    .artist-left {
+    gap: 16px;
     }
     .artist-image { 
         max-width: 320px; 
     }
-    .artist-card { 
-        height: auto; 
-    }
-    .artist-date-loca {
-    margin-top: 0;
-  }
-}
-
-@media (max-width: 768px) { /* tablet */
     .artist-grid {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 0.8rem;
-    }
-    .artist-layout {
-        flex-direction: column;
-    }
-    .artist-image {
-        max-width: 100%;
     }
 }
 
@@ -440,10 +480,6 @@ footer p {
     }
     .green-button, .back-button {
         padding: 6px 12px;
-        font-size: 0.9em;
-    }
-    header h1{
-        font-size: 1.5em;
     }
 }
 

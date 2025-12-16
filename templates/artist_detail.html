@@ -22,37 +22,45 @@
 
         <div class="artist-layout">
 
-            <!-- IMAGE COLUMN -->
-            <div class="artist-image">
-                <img src="{{ .Artist.Image }}" alt="{{ .Artist.Name }}">
+            <!-- LEFT COLUMN: TITLE + IMAGE -->
+            <div class="artist-left">
+                <div class="artist-title artist-panel">
+                    <h2>{{ .Artist.Name }}</h2>
+                </div>
+
+                <div class="artist-image">
+                    <img src="{{ .Artist.Image }}" alt="{{ .Artist.Name }}">
+                </div>
             </div>
 
             <!-- INFO COLUMN -->
-            <div class="artist-info-text">
-                <h2>{{ .Artist.Name }}</h2>
-
+            <div class="artist-info-text artist-panel">
                 <p>
                     <span class="artist-labels">
                         Members ({{ len .Artist.Members }}):
                     </span>
                 </p>
+
                 <ul>
                     {{ range .Artist.Members }}
                         <li>{{ . }}</li>
                     {{ end }}
                 </ul>
 
-                <p>
-                    <span class="artist-labels">Founded:</span> <span class="inline-info">{{ .Artist.CreationDate }}</span>
-                </p>
-                <p>
-                    <span class="artist-labels">First Release:</span> <span class="inline-info">{{ .Artist.FirstAlbum }}</span>
-                </p>
-
+                <div class="artist-meta">
+                    <p>
+                        <span class="artist-labels">Founded:</span>
+                        <span class="inline-info">{{ .Artist.CreationDate }}</span>
+                    </p>
+                    <p>
+                        <span class="artist-labels">First Release:</span>
+                        <span class="inline-info">{{ .Artist.FirstAlbum }}</span>
+                    </p>
+                </div>
             </div>
 
             <!-- TOUR DATES COLUMN -->
-            <div class="artist-date-loca">
+            <div class="artist-date-loca artist-panel">
 
                 <p>
                     <span class="artist-labels">Tour Dates:</span>
