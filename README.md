@@ -14,19 +14,6 @@ A web application that displays information about your favorite artists and band
 - **Frontend**: HTML/CSS
 - **Deployment**: Railway
 
-## Project Structure
-
-```
-groupie-tracker/
-├── api/           # API client logic
-├── handlers/      # HTTP request handlers
-├── models/        # Data structures
-├── services/      # Business logic
-├── static/        # CSS and static assets
-├── templates/     # HTML templates
-└── main.go        # Application entry point
-```
-
 ## Installation
 
 1. Clone the repository:
