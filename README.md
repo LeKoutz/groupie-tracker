@@ -46,10 +46,6 @@ go run main.go
 
 Check out the [live](https://groupie-tracker-production-e666.up.railway.app/) application
 
-## Usage
-
-Simply browse through the artists displayed on the homepage and click on any artist to view their detailed information including concert dates, locations, and band members.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
