@@ -109,7 +109,7 @@ header {
 /* HEADER TITLE */
 header h1 {
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible;
     margin: 0;
     font-size: 2.5rem;
     white-space: nowrap;
