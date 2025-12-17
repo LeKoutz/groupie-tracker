@@ -24,8 +24,6 @@ body, h1, h2, h3, p, a {
 }
 
 :root {
-    --header-height: 80px;
-    --footer-height: 40px;
     --fs-title: clamp(1.5rem, 2.5vw, 2rem);
     --fs-body: clamp(0.9rem, 1.6vw, 1rem);
     --fs-small: clamp(0.85rem, 1.4vw, 0.95rem);
@@ -93,16 +91,13 @@ li {
 
    /* HEADER */
 header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    position: relative;
     z-index: 1000;
-    height: var(--header-height);
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 20px;
+    padding: 16px 20px;
     box-sizing: border-box;
     background: rgba(20, 27, 35, 0.85);
     backdrop-filter: blur(8px);
@@ -113,8 +108,11 @@ header {
 
 /* HEADER TITLE */
 header h1 {
+    max-width: 100%;
+    overflow: hidden;
     margin: 0;
-    font-size: clamp(1.2rem, 4vw, 2.5rem);
+    font-size: 2.5rem;
+    white-space: nowrap;
     color: #97CE4C;
     display: inline-block;
     font-family: 'HeaderFont', sans-serif;
@@ -151,16 +149,13 @@ header nav a {
 
 /* FOOTER */
 footer {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: relative;
     z-index: 1000;
-    height: calc(var(--footer-height) + env(safe-area-inset-bottom));
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 20px;
+    padding: 8px 20px;
     padding-bottom: env(safe-area-inset-bottom);
     box-sizing: border-box;
     background: rgba(20, 27, 35, 0.85);
@@ -189,9 +184,9 @@ footer p {
 
 /* ARTIST MAIN */
 .artist-main {
-    padding-top: calc(var(--header-height) + env(safe-area-inset-top) + 30px);
+    padding-top: 30px;
     padding-right: 20px;
-    padding-bottom: calc(var(--footer-height) + env(safe-area-inset-bottom) + 30px);
+    padding-bottom: 30px;
     padding-left: 20px;
     display: flex;
     justify-content: center;
@@ -428,7 +423,7 @@ margin-bottom: 0;
 }
 
 .artist-date-loca p {
-margin: 5px 0;
+    margin: 5px 0;
 }
 
 .artist-date-loca ul {
@@ -453,7 +448,10 @@ margin: 5px 0;
 }
 
 /* MEDIA QUERY */
-@media (max-width: 1024px) { /* desktop */
+@media (max-width: 991.98px) { /* large */
+    header h1 {
+    font-size: 2.2rem;
+    }
     .artist-layout { 
         grid-template-columns: 1fr;
         gap: 16px;
@@ -473,7 +471,10 @@ margin: 5px 0;
     }
 }
 
-@media (max-width: 480px) { /* mobile */
+@media (max-width: 575.98px) { /* small */
+    header h1 {
+    font-size: 1.7rem;
+    }
     .artist-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 0.6rem;
@@ -497,11 +498,11 @@ margin: 5px 0;
 
 /* ERROR PAGE LAYOUT */
 .error-main {
-    padding-top: calc(var(--header-height) + env(safe-area-inset-top));
+    padding-top: 0;
     padding-right: 20px;
-    padding-bottom: calc(var(--footer-height) + env(safe-area-inset-bottom));
+    padding-bottom: 0;
     padding-left: 20px;
-    min-height: 100vh;
+    min-height: auto;
     display: flex;
     justify-content: center;
     align-items: center;
