@@ -42,7 +42,7 @@ go run main.go
 
 3. Open your browser and navigate to `http://localhost:8080` (or whatever port is set in your PORT environment variable)
 
-## Live Demo
+## Deployed
 
 Check out the [live](https://groupie-tracker-production-e666.up.railway.app/) application
 
