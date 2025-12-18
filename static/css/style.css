@@ -23,8 +23,15 @@ body, h1, h2, h3, p, a {
     -moz-osx-font-smoothing: grayscale;
 }
 
+:root {
+    --fs-title: clamp(1.5rem, 2.5vw, 2rem);
+    --fs-body: clamp(0.9rem, 1.6vw, 1rem);
+    --fs-small: clamp(0.85rem, 1.4vw, 0.95rem);
+}
+
 /* HTML */
 html {
+    height: 100%;
     overflow-y: scroll;
 }
 
@@ -33,12 +40,20 @@ body {
     font-family: 'QuestrialLocal', sans-serif;
     margin: 0;
     padding: 0;
-    background: linear-gradient(145deg, #1c1f28, #252836);
     color: #e0e0e0;
     width: 100%;
+    display: flex;
+    flex-direction: column;
     min-height: 100vh;
-    overflow-x: hidden;
     transition: background 0.3s ease;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(145deg, #1c1f28, #252836);
 }
 
 /* MAIN */
@@ -61,10 +76,14 @@ a:hover {
 }
 
 .inline-info {
-  display: inline;
-  margin-left: 6px;
+    display: inline;
+    margin-left: 6px;
 }
 
+p,
+li {
+    font-size: var(--fs-body);
+}
 
 /* ========================================
    HEADER & FOOTER
@@ -73,23 +92,27 @@ a:hover {
    /* HEADER */
 header {
     position: relative;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
+    z-index: 1000;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 20px;
+    box-sizing: border-box;
     background: rgba(20, 27, 35, 0.85);
-    backdrop-filter: blur(5px);
-    color: white;
-    padding: 15px 0;
-    text-align: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border-bottom: 1px solid #97CE4C;
-    transition: background 0.3s ease, border-color 0.3s ease;
 }
+
 
 /* HEADER TITLE */
 header h1 {
-    margin: 0 auto;
-    font-size: 2.5em;
+    max-width: 100%;
+    overflow: visible;
+    margin: 0;
+    font-size: 2.5rem;
+    white-space: nowrap;
     color: #97CE4C;
     display: inline-block;
     font-family: 'HeaderFont', sans-serif;
@@ -127,24 +150,31 @@ header nav a {
 /* FOOTER */
 footer {
     position: relative;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 20px 0;
-    text-align: center;
+    z-index: 1000;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 20px;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
     background: rgba(20, 27, 35, 0.85);
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: #97CE4C;
     border-top: 1px solid #97CE4C;
 }
+
 footer p {
     margin: 0;
-    font-size: 0.9em;
+    text-align: center;
+    width: 100%;
 }
 
-header, footer {
-    padding-left: 20px;
-    padding-right: 20px;
+.green-button,
+.back-button,
+footer p {
+    font-size: var(--fs-small);
 }
 
 
@@ -154,9 +184,10 @@ header, footer {
 
 /* ARTIST MAIN */
 .artist-main {
-    padding: 30px 20px;
-    margin-top: 80px;
-    padding-bottom: 80px;
+    padding-top: 30px;
+    padding-right: 20px;
+    padding-bottom: 30px;
+    padding-left: 20px;
     display: flex;
     justify-content: center;
     box-sizing: border-box;
@@ -228,16 +259,16 @@ header, footer {
 /* BAND INFO */
 .band-info h3 {
     margin: 0 0 8px 0;
-    font-size: 1em;
     font-weight: 600;
-    color: #f7f7f7;
+    font-size: clamp(1.05rem, 1.8vw, 1.15rem);
+    color: #97CE4C;
     letter-spacing: 0.5px;
 }
 
 /* CARD INFO */
 .card-info p {
     margin: 4px 0;
-    font-size: 0.95em;
+    font-size: var(--fs-body);
     color: #e5e5e5;
 }
 
@@ -251,13 +282,7 @@ header, footer {
     color: #97CE4C;
     background-color: rgba(20, 27, 35, 0.8);
     text-decoration: none;
-    font-size: 0.9em;
     transition: all 0.3s ease;
-}
-.green-button:hover {
-    background-color: #97CE4C;
-    color: #20232A;
-    box-shadow: 0 0 10px #97CE4C, 0 0 20px #97CE4C;
 }
 
 /* ========================================
@@ -282,7 +307,6 @@ header, footer {
     color: #97CE4C;
     background-color: rgba(20, 27, 35, 0.8);
     text-decoration: none;
-    font-size: 0.9em;
     transition: all 0.3s ease;
 }
 .back-button:hover {
@@ -293,57 +317,86 @@ header, footer {
 
 /* ARTIST LAYOUT */
 .artist-layout {
-    display: flex;
-    gap: 30px;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    align-items: start;
 }
+
+/* ARTIST PAGE PANELS */
+.artist-panel {
+    background: rgba(60, 62, 68, 0.85);
+    border-radius: 12px;
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+    padding: 12px 14px;
+}
+
+.artist-panel ul {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.artist-panel > :first-child {
+margin-top: 0;
+}
+
+.artist-panel > :last-child {
+margin-bottom: 0;
+}
+
+.artist-panel p {
+margin: 5px 0;
+}
+
+.artist-left {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.artist-title h2 {
+    margin: 0;
+    font-size: var(--fs-title);
+    line-height: 1.1;
+    word-break: break-word;
+}
+
 
 /* IMAGE */
 .artist-image {
-    flex: 0 0 300px;
     border-radius: 12px;
     overflow: hidden;
-    transition: box-shadow 0.3s ease;
 }
+
 .artist-image img {
     width: 100%;
     height: auto;
     display: block;
 
 }
+
 .artist-info-text .artist-labels:first-of-type {
     margin-top: 0;
 }
 
 /* INFO TEXT */
 .artist-info-text {
-    flex: 1 1 400px;
-}
-
-/* BAND NAME */
-.artist-info-text h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 2em;
-    color: #f7f7f7;
-    letter-spacing: 1px;
-    white-space:nowrap;
-}
-
-/* MEMBERS / INFO LIST */
-.artist-info-text p,
-.artist-info-text li {
-    font-size: 0.95em;
-    color: #f7f7f7;
-    margin: 5px 0;
-    white-space: nowrap;
+    min-width: 0;
 }
 
 /* FOUNDED / FIRST ALBUM */
 .artist-info-text p {
     display: flex;
     align-items: center;
-    margin-top: 30px;
+}
+
+.artist-meta p {
+    margin-top: 15px;
+}
+
+.artist-meta p:last-child {
+margin-bottom: 0;
 }
 
 .artist-info-text ul {
@@ -355,9 +408,9 @@ header, footer {
 .artist-labels {
     color: #97CE4C;
     font-weight: 600;
-    font-size: 1em;
+    font-size: clamp(0.85rem, 3vw, 1em);
     margin-top: 16px;
-    margin-right: 2px;
+    margin-right: 0px;
     display: inline-block;
 }
 
@@ -365,9 +418,12 @@ header, footer {
 .artist-date-loca {
     color: #f7f7f7;
     font-weight: 400;
-    font-size: 0.95em;
-    flex: 1 1 400px;
-    margin-top: 32px;
+    margin-top: 0;
+    min-width: 0;
+}
+
+.artist-date-loca p {
+    margin: 5px 0;
 }
 
 .artist-date-loca ul {
@@ -376,51 +432,63 @@ header, footer {
 }
 
 .artist-date-loca li {
-    white-space: nowrap;
     margin-bottom: 5px;
 }
 
+.artist-date-loca .artist-labels {
+    margin-top: 0;
+}
+
+.artist-info-text h2,
+.artist-info-text p,
+.artist-info-text li,
+.artist-date-loca li {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
 /* MEDIA QUERY */
-@media (max-width: 900px) { /* desktop */
-    .artist-layout {
-        flex-direction: column;
+@media (max-width: 991.98px) { /* large */
+    header h1 {
+    font-size: 2.2rem;
     }
-    .artist-image {
-        max-width: 320px;
+    .artist-layout { 
+        grid-template-columns: 1fr;
+        gap: 16px;
     }
-    .artist-card {
-        height: auto;
+    .artist-title h2 {
+        text-align: center;
     }
-@media (max-width: 768px) { /* tablet */
+    .artist-left {
+    gap: 16px;
+    }
+    .artist-image { 
+        max-width: 320px; 
+    }
     .artist-grid {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 0.8rem;
     }
-    .artist-layout {
-        flex-direction: column;
-    }
-    .artist-image {
-        max-width: 100%;
-    }
-    .artist-card {
-        max-width: 200px;
-    }
 }
-@media (max-width: 480px) { /* mobile */
+
+@media (max-width: 575.98px) { /* small */
+    header h1 {
+    font-size: 1.7rem;
+    }
     .artist-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 0.6rem;
     }
     .green-button, .back-button {
         padding: 6px 12px;
-        font-size: 0.9em;
     }
-    header h1{
-        font-size: 1.5em;
+    footer {
+        height: auto;
+        padding: 4px 10px;
     }
-    .artist-card {
-        max-width: 160px;
-    }
+    footer p {
+        font-size: 0.7rem;
+        line-height: 1.2;
     }
 }
 
@@ -430,9 +498,11 @@ header, footer {
 
 /* ERROR PAGE LAYOUT */
 .error-main {
-    min-height: calc(100vh - 160px);
-    margin-top: 80px;
-    padding-bottom: 80px;
+    padding-top: 0;
+    padding-right: 20px;
+    padding-bottom: 0;
+    padding-left: 20px;
+    min-height: auto;
     display: flex;
     justify-content: center;
     align-items: center;
