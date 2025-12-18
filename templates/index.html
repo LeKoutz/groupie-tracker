@@ -17,8 +17,7 @@
 <main class="artist-main">
     <div id="artist-list" class="artist-grid">
         {{range .Artists}}
-            <div href="/artist/{{.ID}}" class="artist-card">
-                <a href="/artist/{{.ID}}" class="artist-tag">
+            <div class="artist-card">
                 <div class="card-image">
                     <img src="{{.Image}}" alt="{{.Name}}">
                 </div>
@@ -41,7 +40,6 @@
                         <a href="/artist/{{.ID}}" class="green-button">More Info →</a>
                     </section>
                 </div>
-                </a>
             </div>
         {{end}}
     </div>
