@@ -9,7 +9,7 @@ func ExtractYearFromDate(dateStr string) int {
 		return 0
 	}
 	// extract year from "YYYY-MM-DD" format
-	if len(dateStr) < 4 {
+	if len(dateStr) >= 4 {
 		yearStr := dateStr[:4] // YYYY
 		year, err := strconv.Atoi(yearStr)
 		if err == nil {
