@@ -5,6 +5,7 @@ import (
 	"groupie-tracker/api"
 	"groupie-tracker/models"
 	"groupie-tracker/services"
+	"groupie-tracker/search"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -37,10 +38,19 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to load the data. Please try again later.")
 		return
 	}
+	query := r.URL.Query().Get("search")
+	var SearchResults []search.SearchResult
+	if query != "" {
+		SearchResults = search.SearchArtists(query)
+	}
 	data := struct {
-		Artists []models.Artists
+		Artists       []models.Artists
+		SearchQuery   string
+		SearchResults []search.SearchResult
 	}{
-		Artists: api.All_Artists,
+		Artists:       api.All_Artists,
+		SearchQuery:   query,
+		SearchResults: SearchResults,
 	}
 	if err := index_tmpl.Execute(w, data); err != nil {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to complete your request. Please try again later")
