@@ -15,6 +15,29 @@
 </header>
 
 <main class="artist-main">
+    <div class="search-container">
+        <form action="/" method="GET" class="search-form">
+            <input
+                type="text"
+                name="search"
+                placeholder="Search..."
+                value="{{.SearchQuery}}"
+                autocomplete="off"
+            >
+            <button type="submit">Search</button>
+        </form>
+        {{if .SearchResults}}
+        <div class="search-results">
+            <ul>
+                {{range .SearchResults}}
+                    <li>
+                        <a href="/artist/{{.ID}}">{{.Label}}</a>
+                </li>
+                {{end}}
+            </ul>
+        </div>
+        {{end}}
+    </div>
     <div id="artist-list" class="artist-grid">
         {{range .Artists}}
             <div href="/artist/{{.ID}}" class="artist-card">
