@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"groupie-tracker/api"
+	"groupie-tracker/services"
 )
 
 type SearchResult struct {
@@ -12,8 +13,8 @@ type SearchResult struct {
 	ID    int
 }
 
-// SearchArtists searches artists by name, members, first album, or creation date based on the query string
-func SearchArtists(query string) []SearchResult {
+// SearchAll searches artists by name, members, first album, creation date, locations, and dates based on the query string
+func SearchAll(query string) []SearchResult {
 	results := []SearchResult{}
 	searchQuery := strings.ToLower(query)
 	for _, artist := range api.All_Artists {
@@ -47,6 +48,29 @@ func SearchArtists(query string) []SearchResult {
 				Label: creationDateStr + " - Creation Date of " + artist.Name,
 				ID:    artist.ID,
 			})
+		}
+		rel, err := services.GetRelationsByID(artist.ID)
+		if err != nil {
+			continue
+		}
+		// Search by locations in relations
+		for _, loc := range rel.SortedLocations {
+			dates := rel.DatesLocations[loc]
+			// Search by dates in relations
+			for _, date := range dates {
+				if strings.Contains(strings.ToLower(date), searchQuery) {
+					results = append(results, SearchResult{
+						Label: date + " - Concert date at " + loc + " for " + artist.Name,
+						ID:    artist.ID,
+					})
+				}
+				if strings.Contains(strings.ToLower(loc), searchQuery) {
+					results = append(results, SearchResult{
+						Label: loc + " - Concert location on " + date + " for " + artist.Name,
+						ID:    artist.ID,
+					})
+				}
+			}
 		}
 	}
 	return results
