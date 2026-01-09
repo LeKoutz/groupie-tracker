@@ -4,8 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"groupie-tracker/api"
-	"groupie-tracker/services"
+	"groupie-tracker/models"
 )
 
 type SearchResult struct {
@@ -14,10 +13,10 @@ type SearchResult struct {
 }
 
 // SearchAll searches artists by name, members, first album, creation date, locations, and dates based on the query string
-func SearchAll(query string) []SearchResult {
+func SearchAll(query string, artists []models.Artists, getRelations func(int) (*models.Relations, error)) []SearchResult {
 	results := []SearchResult{}
 	searchQuery := strings.ToLower(query)
-	for _, artist := range api.All_Artists {
+	for _, artist := range artists {
 		// Search by name
 		if strings.Contains(strings.ToLower(artist.Name), searchQuery) {
 			results = append(results, SearchResult{
@@ -49,7 +48,7 @@ func SearchAll(query string) []SearchResult {
 				ID:    artist.ID,
 			})
 		}
-		rel, err := services.GetRelationsByID(artist.ID)
+		rel, err := getRelations(artist.ID)
 		if err != nil {
 			continue
 		}
