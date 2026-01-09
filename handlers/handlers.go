@@ -37,7 +37,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("search")
 	var SearchResults []search.SearchResult
 	if query != "" {
-		SearchResults = search.SearchArtists(query)
+		SearchResults = search.SearchAll(query)
 	}
 	data := struct {
 		Artists       []models.Artists
