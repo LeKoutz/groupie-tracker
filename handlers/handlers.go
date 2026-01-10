@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"groupie-tracker/api"
 	"groupie-tracker/models"
@@ -165,4 +166,22 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+// SearchHandler returns search results in JSON format based on the query parameter.
+// It is used for Javascript-based search autocomplete functionality.
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "This request method is not supported for the requested resource. Use GET request instead.")
+		return
+	}
+	query := r.URL.Query().Get("search")
+	if query == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte("[]"))
+		return
+	}
+	SearchResults := search.SearchAll(query, api.All_Artists, services.GetRelationsByID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(SearchResults)
 }
