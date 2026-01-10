@@ -346,8 +346,28 @@ footer p {
     color: #97CE4C99;
 }
 
-/* SEARCH RESULTS DROPDOWN */
-.search-results {
+/* SEARCH BUTTON */
+.search-form button {
+    margin-left: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid #97CE4C;
+    background-color: rgba(20, 27, 35, 0.8);
+    color: #97CE4C;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.search-form button:hover {
+    background-color: #97CE4C;
+    color: #20232A;
+    box-shadow: 0 0 10px #97CE4C, 0 0 20px #97CE4C;
+}
+
+/* ========================================
+   SEARCH RESULTS DROPDOWN
+   ======================================== */
+
+.search-results, .search-suggestions {
     position: absolute;
     top: calc(100% + 6px);
     left: 0;
@@ -396,7 +416,7 @@ footer p {
 }
 
 /* INDIVIDUAL RESULT */
-.search-results a {
+.search-results, .search-suggestions a {
     display: block;
     padding: 2px 1px;
 
@@ -408,15 +428,15 @@ footer p {
 }
 
 /* SCROLLBAR (WEBKIT) */
-.search-results::-webkit-scrollbar {
+.search-results::-webkit-scrollbar, .search-suggestions::-webkit-scrollbar {
     width: 8px;
 }
 
-.search-results::-webkit-scrollbar-track {
+.search-results::-webkit-scrollbar-track, .search-suggestions::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.search-results::-webkit-scrollbar-thumb {
+.search-results::-webkit-scrollbar-thumb, .search-suggestions::-webkit-scrollbar-thumb {
     background-color: rgba(151, 206, 76, 0.4);
     border-radius: 10px;
 }
@@ -432,7 +452,7 @@ footer p {
         font-size: 1rem;
     }
 
-    .search-results a {
+    .search-results a, .search-suggestions a {
         padding: 5px 1px;
     }
 }
