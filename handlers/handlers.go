@@ -48,6 +48,17 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		SearchQuery:   query,
 		SearchResults: SearchResults,
 	}
+	// If query exists and SearchResults != empty, show search results only
+	if query != "" && len(SearchResults) > 0 {
+		data.Artists = []models.Artists{}
+		for _, result := range SearchResults {
+			artist, err := services.GetArtistByID(result.ID)
+			// Append artist to data.Artists if not already appended
+			if err == nil && !services.ArtistExistsInList(data.Artists, artist) {
+				data.Artists = append(data.Artists, *artist)
+			}
+		}
+	}
 	if err := index_tmpl.Execute(w, data); err != nil {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to complete your request. Please try again later")
 		return
