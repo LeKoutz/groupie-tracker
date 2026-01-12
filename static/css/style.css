@@ -367,6 +367,10 @@ footer p {
 /* ========================================
    SEARCH RESULTS DROPDOWN
    ======================================== */
+   
+.js-enabled .search-results {
+    display: none;
+}
 
 .search-results, .search-suggestions {
     position: absolute;
