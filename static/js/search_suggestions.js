@@ -6,10 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let debounceTimer;
 
-  form.addEventListener("submit", e => {
-    e.preventDefault(); // stop page reload
-  });
-
   input.addEventListener("input", () => {
     clearTimeout(debounceTimer);
 
