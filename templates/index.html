@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Groupie Tracker: Home</title> 
     <link rel="stylesheet" href="/static/css/style.css"> 
+    <script>
+  document.documentElement.classList.add("js-enabled");
+</script>
 </head>
 <body>
 
@@ -26,6 +29,7 @@
             >
             <button type="submit">Search</button>
         </form>
+        <div class="search-suggestions" style="display: none;"></div>
         {{if .NoResults}}
         <div class="search-results">
             <p class="no-results">No results found</p>
@@ -74,6 +78,7 @@
         {{end}}
     </div>
 </main>
+<script src="/static/js/search_suggestions.js"></script>
 
 <footer>
     <p>&copy; 2025 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
