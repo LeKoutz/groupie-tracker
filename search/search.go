@@ -63,7 +63,7 @@ func SearchAll(query string, artists []models.Artists, getRelations func(int) (*
 						ID:    artist.ID,
 					})
 				}
-				if strings.Contains(strings.ToLower(loc), searchQuery) {
+				if strings.Contains(strings.ToLower(loc), searchQuery) || strings.Contains(normalize(loc), normalize(query)) {
 					results = append(results, SearchResult{
 						Label: loc + " - Concert location on " + date + " for " + artist.Name,
 						ID:    artist.ID,
