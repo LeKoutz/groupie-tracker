@@ -20,20 +20,20 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch(`/api/search?search=${encodeURIComponent(query)}`);
       const results = await res.json();
 
+      // If no results found show a message, otherwise show a dropdown list
       if (!results || results.length === 0) {
-        resultsBox.style.display = "none";
-        return;
-      }
-
-      resultsBox.innerHTML = `
-        <ul>
-          ${results.map(r => `
-            <li>
-              <a href="/artist/${r.ID}">${r.Label}</a>
-            </li>
-          `).join("")}
-        </ul>
-      `;
+        resultsBox.innerHTML = `<p class="no-results">No results found</p>`;
+      } else {
+        resultsBox.innerHTML = `
+          <ul>
+            ${results.map(r => `
+              <li>
+                <a href="/artist/${r.ID}">${r.Label}</a>
+              </li>
+            `).join("")}
+          </ul>
+        `;
+            }
 
       resultsBox.style.display = "block";
     }, 300);
