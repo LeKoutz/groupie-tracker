@@ -388,6 +388,13 @@ footer p {
     box-shadow: 0 0 10px #97CE4C, 0 0 20px #97CE4C;
 }
 
+.no-results {
+    padding: 8px 12px;
+    margin: 0;
+    font-style: italic;
+    color: #e5e5e5;
+}
+
 /* INDIVIDUAL RESULT */
 .search-results a {
     display: block;

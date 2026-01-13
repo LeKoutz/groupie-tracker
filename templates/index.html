@@ -26,6 +26,11 @@
             >
             <button type="submit">Search</button>
         </form>
+        {{if .NoResults}}
+        <div class="search-results">
+            <p class="no-results">No results found</p>
+        </div>
+        {{end}}
         {{if .SearchResults}}
         <div class="search-results">
             <ul>
