@@ -38,4 +38,10 @@ document.addEventListener("DOMContentLoaded", () => {
       resultsBox.style.display = "block";
     }, 300);
   });
+  // close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!form.contains(e.target) && !resultsBox.contains(e.target)) {
+      resultsBox.style.display = "none";
+    }
+  });
 });
