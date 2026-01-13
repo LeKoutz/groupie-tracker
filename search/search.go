@@ -74,3 +74,12 @@ func SearchAll(query string, artists []models.Artists, getRelations func(int) (*
 	}
 	return results
 }
+// removes punctuation and spaces from string
+func normalize(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, "-", "")
+	s = strings.ReplaceAll(s, ",", "")
+	s = strings.ReplaceAll(s, ".", "")
+	s = strings.ReplaceAll(s, "_", "")
+	return s
+}
