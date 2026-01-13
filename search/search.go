@@ -79,6 +79,7 @@ func normalize(s string) string {
 	s = strings.ToLower(s)
 	s = strings.ReplaceAll(s, "-", "")
 	s = strings.ReplaceAll(s, ",", "")
+	s = strings.ReplaceAll(s, " ", "")
 	s = strings.ReplaceAll(s, ".", "")
 	s = strings.ReplaceAll(s, "_", "")
 	return s
