@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Groupie Tracker: Home</title> 
     <link rel="stylesheet" href="/static/css/style.css"> 
+    <script>
+  document.documentElement.classList.add("js-enabled");
+</script>
 </head>
 <body>
 
@@ -15,6 +18,35 @@
 </header>
 
 <main class="artist-main">
+    <div class="search-container">
+        <form action="/" method="GET" class="search-form">
+            <input
+                type="text"
+                name="search"
+                placeholder="Search..."
+                value="{{.SearchQuery}}"
+                autocomplete="off"
+            >
+            <button type="submit">Search</button>
+        </form>
+        <div class="search-suggestions" style="display: none;"></div>
+        {{if .NoResults}}
+        <div class="search-results">
+            <p class="no-results">No results found</p>
+        </div>
+        {{end}}
+        {{if .SearchResults}}
+        <div class="search-results">
+            <ul>
+                {{range .SearchResults}}
+                    <li>
+                        <a href="/artist/{{.ID}}">{{.Label}}</a>
+                </li>
+                {{end}}
+            </ul>
+        </div>
+        {{end}}
+    </div>
     <div id="artist-list" class="artist-grid">
         {{range .Artists}}
             <div href="/artist/{{.ID}}" class="artist-card">
@@ -46,6 +78,7 @@
         {{end}}
     </div>
 </main>
+<script src="/static/js/search_suggestions.js"></script>
 
 <footer>
     <p>&copy; 2025 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>

@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"groupie-tracker/api"
 	"groupie-tracker/models"
 	"groupie-tracker/services"
+	"groupie-tracker/search"
 	"html/template"
 	"net/http"
 	"path/filepath"
@@ -33,10 +35,35 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/loading/", http.StatusSeeOther)
 		return
 	}
+	query := r.URL.Query().Get("search")
+	var SearchResults []search.SearchResult
+	if query != "" {
+		SearchResults = search.SearchAll(query, api.All_Artists, services.GetRelationsByID)
+	}
 	data := struct {
-		Artists []models.Artists
+		Artists       []models.Artists
+		SearchQuery   string
+		SearchResults []search.SearchResult
+		NoResults	  bool
 	}{
-		Artists: api.All_Artists,
+		Artists:       api.All_Artists,
+		SearchQuery:   query,
+		SearchResults: SearchResults,
+		NoResults:     false,
+	}
+	// If query exists and SearchResults != empty, show search results only
+	if query != "" && len(SearchResults) > 0 {
+		data.Artists = []models.Artists{}
+		for _, result := range SearchResults {
+			artist, err := services.GetArtistByID(result.ID)
+			// Append artist to data.Artists if not already appended
+			if err == nil && !services.ArtistExistsInList(data.Artists, artist) {
+				data.Artists = append(data.Artists, *artist)
+			}
+		}
+	} else if query != "" && len(SearchResults) == 0 {
+		data.SearchResults = []search.SearchResult{}
+		data.NoResults = true
 	}
 	if err := index_tmpl.Execute(w, data); err != nil {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to complete your request. Please try again later")
@@ -139,4 +166,22 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+// SearchHandler returns search results in JSON format based on the query parameter.
+// It is used for Javascript-based search autocomplete functionality.
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "This request method is not supported for the requested resource. Use GET request instead.")
+		return
+	}
+	query := r.URL.Query().Get("search")
+	if query == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte("[]"))
+		return
+	}
+	SearchResults := search.SearchAll(query, api.All_Artists, services.GetRelationsByID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(SearchResults)
 }
