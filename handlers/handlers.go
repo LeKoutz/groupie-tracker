@@ -7,6 +7,7 @@ import (
 	"groupie-tracker/services"
 	"html/template"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -30,7 +31,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if api.GetLoadingStatus().IsLoading {
-		http.Redirect(w, r, "/loading/", http.StatusSeeOther)
+		http.Redirect(w, r, "/loading?requested="+ url.QueryEscape(r.URL.Path), http.StatusSeeOther)
 		return
 	}
 	data := struct {
@@ -51,6 +52,10 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method != http.MethodGet {
 		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "This request method is not supported for the requested resource. Use GET request instead.")
+		return
+	}
+	if api.GetLoadingStatus().IsLoading {
+		http.Redirect(w, r, "/loading?requested="+ url.QueryEscape(r.URL.Path), http.StatusSeeOther)
 		return
 	}
 	artist_ID, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/artist/"))
@@ -120,15 +125,19 @@ func HandleErrors(w http.ResponseWriter, statusCode int, message, response strin
 
 func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	status := api.GetLoadingStatus()
+	requestedURL := r.URL.Query().Get("requested")
+	if requestedURL == "" {
+		requestedURL = "/"
+	}
 	if status.IsLoaded {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		http.Redirect(w, r, requestedURL, http.StatusSeeOther)
 		return
 	}
 	if status.HasFailed {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to load the data. Please try again later.")
 		return
 	} else {
-		w.Header().Set("Refresh", "1; url=/loading")
+		w.Header().Set("Refresh", "1; url="+requestedURL)
 		data := struct {
 			Message string
 		}{
