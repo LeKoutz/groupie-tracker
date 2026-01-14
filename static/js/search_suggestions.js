@@ -42,6 +42,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", (e) => {
     if (!form.contains(e.target) && !resultsBox.contains(e.target)) {
       resultsBox.style.display = "none";
+    } else {
+      if (resultsBox.innerHTML !== "") {
+        resultsBox.style.display = "block";
+      }
     }
   });
 });
