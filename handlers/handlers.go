@@ -31,7 +31,10 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if api.GetLoadingStatus().IsLoading {
-		http.Redirect(w, r, "/loading?requested="+ url.QueryEscape(r.URL.Path), http.StatusSeeOther)
+		http.Redirect(w, r, "/loading?requested="+url.QueryEscape(r.URL.Path), http.StatusSeeOther)
+		return
+	} else if api.GetLoadingStatus().HasFailed {
+		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to load the data. Please try again later.")
 		return
 	}
 	data := struct {
@@ -56,6 +59,9 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if api.GetLoadingStatus().IsLoading {
 		http.Redirect(w, r, "/loading?requested="+ url.QueryEscape(r.URL.Path), http.StatusSeeOther)
+		return
+	} else if api.GetLoadingStatus().HasFailed {
+		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to load the data. Please try again later.")
 		return
 	}
 	artist_ID, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/artist/"))
