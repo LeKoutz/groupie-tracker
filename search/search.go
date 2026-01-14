@@ -63,7 +63,7 @@ func SearchAll(query string, artists []models.Artists, getRelations func(int) (*
 						ID:    artist.ID,
 					})
 				}
-				if strings.Contains(strings.ToLower(loc), searchQuery) {
+				if strings.Contains(strings.ToLower(loc), searchQuery) || strings.Contains(normalize(loc), normalize(query)) {
 					results = append(results, SearchResult{
 						Label: loc + " - Concert location on " + date + " for " + artist.Name,
 						ID:    artist.ID,
@@ -73,4 +73,14 @@ func SearchAll(query string, artists []models.Artists, getRelations func(int) (*
 		}
 	}
 	return results
+}
+// removes punctuation and spaces from string
+func normalize(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, "-", "")
+	s = strings.ReplaceAll(s, ",", "")
+	s = strings.ReplaceAll(s, " ", "")
+	s = strings.ReplaceAll(s, ".", "")
+	s = strings.ReplaceAll(s, "_", "")
+	return s
 }
