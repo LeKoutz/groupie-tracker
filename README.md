@@ -34,7 +34,7 @@ go run main.go
 
 ## Deployed
 
-Check out the [live](https://groupie-tracker-production-e666.up.railway.app/) application
+Check out the [live](https://groupie-tracker-production-e572.up.railway.app/) application
 
 ## License
 
