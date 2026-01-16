@@ -7,6 +7,7 @@ A web application that displays information about your favorite artists and band
 - View artist and band information
 - Display concert locations and dates
 - Show band members and formation dates
+- Search artists, members, dates and locations with dynamic search-suggestions
 
 ## Visual Enhancements
    * Smooth Scrolling: Fluid page navigation for a more polished feel.
@@ -16,7 +17,9 @@ A web application that displays information about your favorite artists and band
 ## Tech Stack
 
 - **Backend**: Go
-- **Frontend**: HTML/CSS
+- **Frontend**:
+    - HTML/CSS
+    - Javascript (for dynamic search-suggestions only)
 - **Deployment**: Railway
 
 ## Installation
