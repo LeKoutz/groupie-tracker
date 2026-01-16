@@ -27,6 +27,14 @@
                 value="{{.SearchQuery}}"
                 autocomplete="off"
             >
+            <select name="category" class="search-category">
+                <option value="all">All</option>
+                <option value="artist">Artist/Band</option>
+                <option value="member">Member</option>
+                <option value="first_album">First Album</option>
+                <option value="creation_date">Creation Date</option>
+                <option value="concert">Concert</option>
+            </select>
             <button type="submit">Search</button>
         </form>
         <div class="search-suggestions" style="display: none;"></div>
