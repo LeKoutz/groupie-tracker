@@ -2,14 +2,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector(".search-form");
   const input = form.querySelector("input[name='search']");
   const resultsBox = document.querySelector(".search-suggestions");
+  const categorySelect = form.querySelector("select[name='category']");
   console.log(resultsBox);
 
   let debounceTimer;
 
-  input.addEventListener("input", () => {
+  const fetchResults =  () => {
     clearTimeout(debounceTimer);
 
     const query = input.value.trim();
+    const category = categorySelect.value;
     if (!query) {
       resultsBox.innerHTML = "";
       resultsBox.style.display = "none";
@@ -17,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     debounceTimer = setTimeout(async () => {
-      const res = await fetch(`/api/search?search=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/search?search=${encodeURIComponent(query)}&category=${encodeURIComponent(categorySelect.value)}`);
       const results = await res.json();
 
       // If no results found show a message, otherwise show a dropdown list
@@ -37,7 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       resultsBox.style.display = "block";
     }, 300);
-  });
+  };
+  input.addEventListener("input", fetchResults);
+  categorySelect.addEventListener("change", fetchResults);
   // close dropdown when clicking outside
   document.addEventListener("click", (e) => {
     if (!form.contains(e.target) && !resultsBox.contains(e.target)) {

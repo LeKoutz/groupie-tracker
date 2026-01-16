@@ -40,6 +40,10 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	if query != "" {
 		SearchResults = search.SearchAll(query, api.All_Artists, services.GetRelationsByID)
 	}
+	category := r.URL.Query().Get("category")
+	if category != "" && category != "all" {
+		SearchResults = search.FilterSearch(SearchResults, category)
+	}
 	data := struct {
 		Artists       []models.Artists
 		SearchQuery   string
@@ -182,6 +186,10 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	SearchResults := search.SearchAll(query, api.All_Artists, services.GetRelationsByID)
+	category := r.URL.Query().Get("category")
+	if category != "" && category != "all" {
+		SearchResults = search.FilterSearch(SearchResults, category)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(SearchResults)
 }
