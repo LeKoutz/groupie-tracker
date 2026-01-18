@@ -213,16 +213,17 @@ footer p {
     display: flex;
     flex-direction: column;
     background: rgba(60, 62, 68, 0.85);
-    border: 0px solid #97CE4C;
+    border: 1px solid transparent;
     border-radius: 12px;
     overflow: hidden;
-    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    transition: all 0.3s ease;
     backdrop-filter: blur(4px);
 }
 
 /* HOVER EFFECT */
 .artist-card:hover {
-    transform: translateY(-8px) scale(1.02);
+    border-color: #97CE4C;
+    transform: translateY(-8px);
     box-shadow: 0 12px 25px rgba(151, 206, 76, 0.6);
 }
 
