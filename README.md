@@ -8,6 +8,11 @@ A web application that displays information about your favorite artists and band
 - Display concert locations and dates
 - Show band members and formation dates
 
+## Visual Enhancements
+   * Smooth Scrolling: Fluid page navigation for a more polished feel.
+   * Interactive UI: Bouncy "spring" hover effects on images and card highlights for better feedback.
+   * Mobile-Ready: Optimized responsive layouts for error pages and artist grids.
+
 ## Tech Stack
 
 - **Backend**: Go
