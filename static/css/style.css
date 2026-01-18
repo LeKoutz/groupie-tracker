@@ -1,6 +1,12 @@
 /* ========================================
    GENERAL STYLES
    ======================================== */
+/* HTML */
+html {
+    height: 100%
+    overflow-y: scroll;
+    scroll-behavior: smooth;
+}
 
 /* FONTS */
 @font-face {
