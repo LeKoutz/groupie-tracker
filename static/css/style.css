@@ -572,15 +572,16 @@ margin-bottom: 0;
     background-color: rgba(20, 27, 35, 0.8);
     color: #97CE4C;
     cursor: pointer;
-    padding: 10px 16px;
-    border-radius: 50%;
-    transition: all 0.3s ease;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     backdrop-filter: blur(4px);
+    border: 1px solid #97CE4C;
 }
 
 #scrollTopBtn:hover {
     background-color: #97CE4C;
     color: #20232A;
-    box-shadow: 0 0 10px #97CE4C, 0 0 20px #97CE4C;
-    transform: translateY(-3px);
+    box-shadow: 0 0 15px #97CE4C, 0 0 30px rgba(151, 206, 76, 0.4);
+    transform: translateY(-5px) scale(1.1);
 }
