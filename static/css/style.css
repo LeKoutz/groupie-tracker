@@ -1,6 +1,12 @@
 /* ========================================
    GENERAL STYLES
    ======================================== */
+/* HTML */
+html {
+    height: 100%;
+    overflow-y: scroll;
+    scroll-behavior: smooth;
+}
 
 /* FONTS */
 @font-face {
@@ -27,12 +33,6 @@ body, h1, h2, h3, p, a {
     --fs-title: clamp(1.5rem, 2.5vw, 2rem);
     --fs-body: clamp(0.9rem, 1.6vw, 1rem);
     --fs-small: clamp(0.85rem, 1.4vw, 0.95rem);
-}
-
-/* HTML */
-html {
-    height: 100%;
-    overflow-y: scroll;
 }
 
 /* BODY */
@@ -207,16 +207,17 @@ footer p {
     display: flex;
     flex-direction: column;
     background: rgba(60, 62, 68, 0.85);
-    border: 0px solid #97CE4C;
+    border: 1px solid transparent;
     border-radius: 12px;
     overflow: hidden;
-    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    transition: all 0.3s ease;
     backdrop-filter: blur(4px);
 }
 
 /* HOVER EFFECT */
 .artist-card:hover {
-    transform: translateY(-8px) scale(1.02);
+    border-color: #97CE4C;
+    transform: translateY(-8px);
     box-shadow: 0 12px 25px rgba(151, 206, 76, 0.6);
 }
 
@@ -373,7 +374,11 @@ margin: 5px 0;
     width: 100%;
     height: auto;
     display: block;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
 
+.artist-image:hover img {
+    transform: scale(1.05);
 }
 
 .artist-info-text .artist-labels:first-of-type {
@@ -520,7 +525,8 @@ margin-bottom: 0;
 
 /* ERROR CARD CONTAINER */
 .error-card {
-    width: 50%;
+    width: 90%;
+    max-width: 500px;
     padding: 32px 24px;
     background: rgba(60, 62, 68, 0.9);
     border-radius: 16px;
@@ -551,4 +557,31 @@ margin-bottom: 0;
     margin: 0 0 20px 0;
     font-size: 0.98rem;
     color: #f7f7f7;
+}
+
+/* ========================================
+   SCROLL TO TOP BUTTON
+   ======================================== */
+#scrollTopBtn {
+    display: none;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1001;
+    font-size: 1.5rem;
+    background-color: rgba(20, 27, 35, 0.8);
+    color: #97CE4C;
+    cursor: pointer;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(4px);
+    border: 1px solid #97CE4C;
+}
+
+#scrollTopBtn:hover {
+    background-color: #97CE4C;
+    color: #20232A;
+    box-shadow: 0 0 15px #97CE4C, 0 0 30px rgba(151, 206, 76, 0.4);
+    transform: translateY(-5px) scale(1.1);
 }
