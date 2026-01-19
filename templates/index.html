@@ -51,5 +51,18 @@
     <p>&copy; 2025 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
 </footer>
 
+<button onclick="window.scrollTo(0,0)" id="scrollTopBtn" title="Go to top">↑</button>
+
+<script>
+// show button when scrolling down
+window.onscroll = function() {
+var btn = document.getElementById("scrollTopBtn");
+if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+  btn.style.display = "block";
+} else {
+  btn.style.display = "none";
+}
+};
+</script>
 </body>
 </html>
