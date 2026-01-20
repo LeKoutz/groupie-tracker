@@ -7,11 +7,14 @@ A web application that displays information about your favorite artists and band
 - View artist and band information
 - Display concert locations and dates
 - Show band members and formation dates
+- Search artists, members, dates and locations with dynamic search-suggestions
 
 ## Tech Stack
 
 - **Backend**: Go
-- **Frontend**: HTML/CSS
+- **Frontend**:
+    - HTML/CSS
+    - Javascript (for dynamic search-suggestions only)
 - **Deployment**: Railway
 
 ## Installation
@@ -31,7 +34,7 @@ go run main.go
 
 ## Deployed
 
-Check out the [live](https://groupie-tracker-production-e666.up.railway.app/) application
+Check out the [live](https://groupie-tracker-production-e572.up.railway.app/) application
 
 ## License
 
