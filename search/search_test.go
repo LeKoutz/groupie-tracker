@@ -3,7 +3,6 @@ package search
 import (
 	"testing"
 	"groupie-tracker/models"
-	"strings"
 )
 
 func TestSearchAll(t *testing.T) {
@@ -79,7 +78,8 @@ func TestSearchAll(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, token := range strings.Fields(tt.query) {
+			searchQuery := ParseQuery(tt.query)
+			for _, token := range searchQuery {
 				results := SearchAll(token, fakeArtists, fakeRelations)
 				if tt.expectedResults > 0 {
 					if len(results) == 0 {

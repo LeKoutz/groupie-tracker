@@ -38,7 +38,10 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("search")
 	var SearchResults []search.SearchResult
 	if query != "" {
-		SearchResults = search.SearchAll(query, api.All_Artists, services.GetRelationsByID)
+		searchQuery := search.ParseQuery(query)
+		for _, token := range searchQuery {
+			SearchResults = search.SearchAll(token, api.All_Artists, services.GetRelationsByID)
+		}
 	}
 	category := r.URL.Query().Get("category")
 	if category != "" && category != "all" {

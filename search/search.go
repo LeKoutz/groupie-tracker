@@ -113,3 +113,9 @@ func FilterSearch(results []SearchResult, option string) []SearchResult {
 	}
 	return filtered
 }
+
+// ParseQuery splits the search query into tokens
+// ex. "Pink Floyd" -> {"pink" "floyd"}
+func ParseQuery(query string) []string {
+	return strings.Fields(strings.ToLower(query))
+}
