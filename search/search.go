@@ -13,68 +13,76 @@ type SearchResult struct {
 	Category string
 }
 
-// SearchAll searches artists by name, members, first album, creation date, locations, and dates based on the query string
+// SearchAll searches artists by name, members, first album, creation date, locations, and dates based on the query string.
+// It expects a single-word query. Thus, queries like "Freddie Mercury" should be split into []string{"Freddie" "Mercury"}
 func SearchAll(query string, artists []models.Artists, getRelations func(int) (*models.Relations, error)) []SearchResult {
 	results := []SearchResult{}
 	searchQuery := strings.ToLower(query)
 	for _, artist := range artists {
 		// Search by name
-		if strings.HasPrefix(strings.ToLower(artist.Name), searchQuery) {
-			results = append(results, SearchResult{
-				Label: artist.Name + " - Artist/Band",
-				ID:    artist.ID,
-				Category: "artist",
-			})
-		}
-		// Search by members
-		for _, member := range artist.Members {
-			if strings.HasPrefix(strings.ToLower(member), searchQuery) {
+		for _, part := range strings.Fields(strings.ToLower(artist.Name)) {
+			if strings.HasPrefix(part, searchQuery) {
 				results = append(results, SearchResult{
-					Label: member + " - Member of " + artist.Name,
-					ID:    artist.ID,
-					Category: "member",
+					Label:    artist.Name + " - Artist/Band",
+					ID:       artist.ID,
+					Category: "artist",
 				})
 			}
 		}
+		// Search by members
+		for _, member := range artist.Members {
+			for _, part := range strings.Fields(strings.ToLower(member)) {
+				if strings.HasPrefix(part, searchQuery) {
+					results = append(results, SearchResult{
+						Label:    member + " - Member of " + artist.Name,
+						ID:       artist.ID,
+						Category: "member",
+					})
+				}
+			}
+		}
 		// Search by first album
-		if strings.Contains(strings.ToLower(artist.FirstAlbum), searchQuery) {
+		if strings.HasPrefix(artist.FirstAlbum, searchQuery) {
 			results = append(results, SearchResult{
-				Label: artist.FirstAlbum + " - First Album of " + artist.Name,
-				ID:    artist.ID,
+				Label:    artist.FirstAlbum + " - First Album of " + artist.Name,
+				ID:       artist.ID,
 				Category: "first_album",
 			})
 		}
 		// Search by creation date
 		creationDateStr := strconv.Itoa(artist.CreationDate)
-		if strings.Contains(creationDateStr, searchQuery) {
+		if strings.HasPrefix(creationDateStr, searchQuery) {
 			results = append(results, SearchResult{
-				Label: creationDateStr + " - Creation Date of " + artist.Name,
-				ID:    artist.ID,
+				Label:    creationDateStr + " - Creation Date of " + artist.Name,
+				ID:       artist.ID,
 				Category: "creation_date",
 			})
 		}
+		// Search in Relations
 		rel, err := getRelations(artist.ID)
 		if err != nil {
 			continue
 		}
-		// Search by locations in relations
 		for _, loc := range rel.SortedLocations {
 			dates := rel.DatesLocations[loc]
-			// Search by dates in relations
+			// Search by dates
 			for _, date := range dates {
-				if strings.Contains(strings.ToLower(date), searchQuery) {	
+				if strings.Contains(date, searchQuery) {
 					results = append(results, SearchResult{
-						Label: date + " - Concert date at " + loc + " for " + artist.Name,
-						ID:    artist.ID,
+						Label:    date + " - Concert date at " + loc + " for " + artist.Name,
+						ID:       artist.ID,
 						Category: "concert",
 					})
 				}
-				if strings.HasPrefix(strings.ToLower(loc), searchQuery) || strings.HasPrefix(normalize(loc), normalize(query)) {
-					results = append(results, SearchResult{
-						Label: loc + " - Concert location on " + date + " for " + artist.Name,
-						ID:    artist.ID,
-						Category: "concert",
-					})
+				// Search by location
+				for _, part := range strings.Fields(strings.ToLower(loc)) {
+					if strings.HasPrefix(part, searchQuery) {
+						results = append(results, SearchResult{
+							Label:    loc + " - Concert location on " + date + " for " + artist.Name,
+							ID:       artist.ID,
+							Category: "concert",
+						})
+					}
 				}
 			}
 		}
