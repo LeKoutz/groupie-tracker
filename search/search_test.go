@@ -93,3 +93,71 @@ func TestSearchAll(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchResults(t *testing.T) {
+	// query := "japan queen"
+	results := [][]SearchResult{
+		{
+			{
+				Label: "Osaka, Japan - Concert location on 28-01-2020 for Queen",
+				ID: 1,
+				Category: "location", 
+				Method: MethodContains,
+			},
+			{
+				Label: "Tokyo, Japan - Concert location on 30-01-2020 for Queen",
+				ID: 1,
+				Category: "location", 
+				Method: MethodContains,
+			},
+		},
+		{
+			{
+				Label: "Queen - Artist/Band",
+				ID: 1,
+				Category: "artist", 
+				Method: MethodPrefix,
+			},
+			{
+				Label: "Queensland, Australia - Concert location on 24-02-2020 for Scorpions",
+				ID: 4,
+				Category: "location", 
+				Method: MethodPrefix,
+			},
+		},
+	}
+			
+	expected := []SearchResult{
+		{
+			Label: "Queen - Artist/Band",
+			ID: 1,
+			Category: "artist",
+		},
+		{
+			Label: "Osaka, Japan - Concert location on 28-01-2020 for Queen",
+			ID: 1,
+			Category: "location",
+		},
+		{
+			Label: "Tokyo, Japan - Concert location on 30-01-2020 for Queen",
+			ID: 1,
+			Category: "location",
+		},
+	}
+	got := MatchResults(results)
+	SortResults(got)
+	if len(got) != len(expected) {
+		t.Errorf("Expected %d results, got %d", len(expected), len(got))
+	}
+	for i, expectedItem := range expected {
+		if got[i].Label != expectedItem.Label {
+			t.Errorf("Expected label %q, got %q", expectedItem.Label, got[i].Label)
+		}
+		if got[i].ID != expectedItem.ID {
+			t.Errorf("Expected ID %d, got %d", expectedItem.ID, got[i].ID)
+		}
+		if got[i].Category != expectedItem.Category {
+			t.Errorf("Expected category %q, got %q", expectedItem.Category, got[i].Category)
+		}
+	}
+}
