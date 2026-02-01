@@ -1,16 +1,25 @@
 package search
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 
 	"groupie-tracker/models"
 )
 
+type SearchMethod int
+
+const (
+	MethodContains SearchMethod = 0
+	MethodPrefix   SearchMethod = 1
+)
+
 type SearchResult struct {
 	Label string
 	ID    int
 	Category string
+	Method	 SearchMethod
 }
 
 // SearchAll searches artists by name, members, first album, creation date, locations, and dates based on the query string.
@@ -26,6 +35,14 @@ func SearchAll(query string, artists []models.Artists, getRelations func(int) (*
 					Label:    artist.Name + " - Artist/Band",
 					ID:       artist.ID,
 					Category: "artist",
+					Method:   MethodPrefix,
+				})
+			} else if strings.Contains(part, searchQuery) {
+				results = append(results, SearchResult{
+					Label:    artist.Name + " - Artist/Band",
+					ID:       artist.ID,
+					Category: "artist",
+					Method:   MethodContains,
 				})
 			}
 		}
@@ -37,6 +54,14 @@ func SearchAll(query string, artists []models.Artists, getRelations func(int) (*
 						Label:    member + " - Member of " + artist.Name,
 						ID:       artist.ID,
 						Category: "member",
+						Method:   MethodPrefix,
+					})
+				} else if strings.Contains(part, searchQuery) {
+					results = append(results, SearchResult{
+						Label:    member + " - Member of " + artist.Name,
+						ID:       artist.ID,
+						Category: "member",
+						Method:   MethodContains,
 					})
 				}
 			}
@@ -47,6 +72,14 @@ func SearchAll(query string, artists []models.Artists, getRelations func(int) (*
 				Label:    artist.FirstAlbum + " - First Album of " + artist.Name,
 				ID:       artist.ID,
 				Category: "first_album",
+				Method:   MethodPrefix,
+			})
+		} else if strings.Contains(artist.FirstAlbum, searchQuery) {
+			results = append(results, SearchResult{
+				Label:    artist.FirstAlbum + " - First Album of " + artist.Name,
+				ID:       artist.ID,
+				Category: "first_album",
+				Method:   MethodContains,
 			})
 		}
 		// Search by creation date
@@ -56,6 +89,14 @@ func SearchAll(query string, artists []models.Artists, getRelations func(int) (*
 				Label:    creationDateStr + " - Creation Date of " + artist.Name,
 				ID:       artist.ID,
 				Category: "creation_date",
+				Method:   MethodPrefix,
+			})
+		} else if strings.Contains(creationDateStr, searchQuery) {
+			results = append(results, SearchResult{
+				Label:    creationDateStr + " - Creation Date of " + artist.Name,
+				ID:       artist.ID,
+				Category: "creation_date",
+				Method:   MethodContains,
 			})
 		}
 		// Search in Relations
@@ -67,20 +108,36 @@ func SearchAll(query string, artists []models.Artists, getRelations func(int) (*
 			dates := rel.DatesLocations[loc]
 			// Search by dates
 			for _, date := range dates {
-				if strings.Contains(date, searchQuery) {
+				if strings.HasPrefix(date, searchQuery) {
 					results = append(results, SearchResult{
 						Label:    date + " - Concert date at " + loc + " for " + artist.Name,
 						ID:       artist.ID,
 						Category: "concert",
+						Method:   MethodPrefix,
+					})
+				} else if strings.Contains(date, searchQuery) {
+					results = append(results, SearchResult{
+						Label:    date + " - Concert date at " + loc + " for " + artist.Name,
+						ID:       artist.ID,
+						Category: "concert",
+						Method:   MethodContains,
 					})
 				}
 				// Search by location
-				for _, part := range strings.Fields(strings.ToLower(loc)) {
-					if strings.HasPrefix(part, searchQuery) {
+				for _, part := range strings.Fields(strings.ToLower(normalize(loc))) {
+					if strings.HasPrefix(part, normalize(searchQuery)) {
 						results = append(results, SearchResult{
 							Label:    loc + " - Concert location on " + date + " for " + artist.Name,
 							ID:       artist.ID,
 							Category: "concert",
+							Method:   MethodPrefix,
+						})
+					} else if strings.Contains(part, normalize(searchQuery)) {
+						results = append(results, SearchResult{
+							Label:    loc + " - Concert location on " + date + " for " + artist.Name,
+							ID:       artist.ID,
+							Category: "concert",
+							Method:   MethodContains,
 						})
 					}
 				}
@@ -98,6 +155,7 @@ func normalize(s string) string {
 	s = strings.ReplaceAll(s, " ", "")
 	s = strings.ReplaceAll(s, ".", "")
 	s = strings.ReplaceAll(s, "_", "")
+	s = strings.ReplaceAll(s, ":", "")
 	return s
 }
 
