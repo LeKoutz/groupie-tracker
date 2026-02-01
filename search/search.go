@@ -231,12 +231,23 @@ func MatchResults(tokenResults [][]SearchResult) []SearchResult {
 }
 
 // RemoveDuplicates removes duplicate search results based on Label
+// It splits the label into two parts with " - " as the delimiter,
+// standardizes the first part by reordering words alphabetically,
+// and then uses the standardized label to identify duplicates.
 func RemoveDuplicates(results []SearchResult) []SearchResult {
 	seen := make(map[string]bool)
 	unique := []SearchResult{}
 	for _, r := range results {
-		if !seen[r.Label] {
-			seen[r.Label] = true
+		var label string
+		parts := strings.SplitN(r.Label, " - ", 2)
+		firstPart := strings.ToLower(strings.TrimSpace(parts[0]))
+		words := strings.Fields(firstPart)
+		sort.Strings(words)
+		standardName := strings.Join(words, " ")
+		label = standardName + parts[1]
+		// Add to unique results if not seen before
+		if !seen[label] {
+			seen[label] = true
 			unique = append(unique, r)
 		}
 	}
