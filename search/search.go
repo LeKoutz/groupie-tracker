@@ -50,8 +50,16 @@ func SearchAll(query string, artists []models.Artists, getRelations func(int) (*
 		for _, member := range artist.Members {
 			for _, part := range strings.Fields(strings.ToLower(member)) {
 				if strings.HasPrefix(part, searchQuery) {
+					fullName := member
+					// If match is on surname (not first word), reorder to surname first
+					parts := strings.Fields(member)
+					name := parts[0]
+					surname := parts[len(parts)-1]
+					if len(parts) > 1 && strings.HasPrefix(strings.ToLower(surname), searchQuery) {
+						fullName = surname + " " + name
+					}
 					results = append(results, SearchResult{
-						Label:    member + " - Member of " + artist.Name,
+						Label:    fullName + " - Member of " + artist.Name,
 						ID:       artist.ID,
 						Category: "member",
 						Method:   MethodPrefix,
@@ -243,7 +251,9 @@ func Search(query string, artists []models.Artists, getRelations func(int) (*mod
 	tokens := ParseQuery(query)
 	if len(tokens) == 1 {
 		// Single token search
-		return SearchAll(tokens[0], artists, getRelations)
+		results := SearchAll(tokens[0], artists, getRelations)
+		SortResults(results)
+		return RemoveDuplicates(results)
 	}
 	// Multi-token search
 	resultsPerToken := [][]SearchResult{}
