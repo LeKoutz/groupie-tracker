@@ -177,3 +177,83 @@ func FilterSearch(results []SearchResult, option string) []SearchResult {
 func ParseQuery(query string) []string {
 	return strings.Fields(strings.ToLower(query))
 }
+
+// SortResults sorts the search results by method (prefix matches before contains matches)
+func SortResults(results []SearchResult) {
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Method > results[j].Method
+	})
+}
+
+// MatchResults returns only the results whose IDs appear in all token results
+func MatchResults(tokenResults [][]SearchResult) []SearchResult {
+	if len(tokenResults) == 0 {
+		return nil
+	}
+	// Count how many token-groups each ID appears in
+	idTokenCount := make(map[int]int)
+	for _, results := range tokenResults {
+		seen := make(map[int]bool)
+		for _, r := range results {
+			if seen[r.ID] {
+				continue
+			}
+			seen[r.ID] = true
+			idTokenCount[r.ID]++
+		}
+	}
+	required := len(tokenResults)
+	// Determine which IDs appear in ALL token groups
+	validIDs := make(map[int]bool)
+	for id, count := range idTokenCount {
+		if count == required {
+			validIDs[id] = true
+		}
+	}
+	// Collect ALL results belonging to valid IDs
+	matched := []SearchResult{}
+	for _, results := range tokenResults {
+		for _, r := range results {
+			if validIDs[r.ID] {
+				matched = append(matched, r)
+			}
+		}
+	}
+	return matched
+}
+
+// RemoveDuplicates removes duplicate search results based on Label
+func RemoveDuplicates(results []SearchResult) []SearchResult {
+	seen := make(map[string]bool)
+	unique := []SearchResult{}
+	for _, r := range results {
+		if !seen[r.Label] {
+			seen[r.Label] = true
+			unique = append(unique, r)
+		}
+	}
+	return unique
+}
+
+// Search performs a full search based on the query string.
+// It splits the query into tokens, searches for each token, matches results that appear in all tokens,
+// sorts the results, and removes duplicates.
+func Search(query string, artists []models.Artists, getRelations func(int) (*models.Relations, error)) []SearchResult {
+	// Tokenize the query
+	tokens := ParseQuery(query)
+	if len(tokens) == 1 {
+		// Single token search
+		return SearchAll(tokens[0], artists, getRelations)
+	}
+	// Multi-token search
+	resultsPerToken := [][]SearchResult{}
+	for _, token := range tokens {
+		tokenResults := SearchAll(token, artists, getRelations)
+		resultsPerToken = append(resultsPerToken, tokenResults)
+	}
+	// Match results that appear in all tokens
+	results := MatchResults(resultsPerToken)
+	// Sort results
+	SortResults(results)
+	return RemoveDuplicates(results)
+}
