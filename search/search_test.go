@@ -78,15 +78,86 @@ func TestSearchAll(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := SearchAll(tt.query, fakeArtists, fakeRelations)
-			if tt.expectedResults > 0 {
-				if len(results) == 0 {
-					t.Fatalf("expected at least 1 result, got 0")
-				}
-				if results[0].Label != tt.expectedLabel {
-					t.Errorf("expected label %q, got %q", tt.expectedLabel, results[0].Label)
+			searchQuery := ParseQuery(tt.query)
+			for _, token := range searchQuery {
+				results := SearchAll(token, fakeArtists, fakeRelations)
+				if tt.expectedResults > 0 {
+					if len(results) == 0 {
+						t.Fatalf("expected %d results, got %d", tt.expectedResults, len(results))
+					}
+					if results[0].Label != tt.expectedLabel {
+						t.Errorf("expected label %q, got %q", tt.expectedLabel, results[0].Label)
+					}
 				}
 			}
 		})
+	}
+}
+
+func TestMatchResults(t *testing.T) {
+	// query := "japan queen"
+	results := [][]SearchResult{
+		{
+			{
+				Label: "Osaka, Japan - Concert location on 28-01-2020 for Queen",
+				ID: 1,
+				Category: "location", 
+				Method: MethodContains,
+			},
+			{
+				Label: "Tokyo, Japan - Concert location on 30-01-2020 for Queen",
+				ID: 1,
+				Category: "location", 
+				Method: MethodContains,
+			},
+		},
+		{
+			{
+				Label: "Queen - Artist/Band",
+				ID: 1,
+				Category: "artist", 
+				Method: MethodPrefix,
+			},
+			{
+				Label: "Queensland, Australia - Concert location on 24-02-2020 for Scorpions",
+				ID: 4,
+				Category: "location", 
+				Method: MethodPrefix,
+			},
+		},
+	}
+			
+	expected := []SearchResult{
+		{
+			Label: "Queen - Artist/Band",
+			ID: 1,
+			Category: "artist",
+		},
+		{
+			Label: "Osaka, Japan - Concert location on 28-01-2020 for Queen",
+			ID: 1,
+			Category: "location",
+		},
+		{
+			Label: "Tokyo, Japan - Concert location on 30-01-2020 for Queen",
+			ID: 1,
+			Category: "location",
+		},
+	}
+	got := MatchResults(results)
+	SortResults(got)
+	if len(got) != len(expected) {
+		t.Errorf("Expected %d results, got %d", len(expected), len(got))
+	}
+	for i, expectedItem := range expected {
+		if got[i].Label != expectedItem.Label {
+			t.Errorf("Expected label %q, got %q", expectedItem.Label, got[i].Label)
+		}
+		if got[i].ID != expectedItem.ID {
+			t.Errorf("Expected ID %d, got %d", expectedItem.ID, got[i].ID)
+		}
+		if got[i].Category != expectedItem.Category {
+			t.Errorf("Expected category %q, got %q", expectedItem.Category, got[i].Category)
+		}
 	}
 }
