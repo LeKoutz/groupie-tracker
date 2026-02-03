@@ -3,6 +3,7 @@ package services
 import (
 	"groupie-tracker/models"
 	"sort"
+	"strings"
 )
 
 func ExtractYearFromDate(dateStr string) int {
@@ -52,6 +53,21 @@ func matchesFilters(artist models.Artists, artistLocs []string, f models.FilterP
 		return hasMatchingLocation(artistLocs, f.SelectedLocations)
 	}
 	return true
+}
+
+// hasMatchingLocation handles the hierarchical location check.
+// e.g. "Washington, USA" matches "Seattle, Washington, USA"
+func hasMatchingLocation(artistLocs []string, selected []string) bool {
+	for _, s := range selected {
+		target := strings.ToLower(s)
+		for _, loc := range artistLocs {
+			formatted := strings.ToLower(formatLocationName(loc))
+			if strings.Contains(formatted, target) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // ParseLocations collects all unique, formatted locations from the dataset.
