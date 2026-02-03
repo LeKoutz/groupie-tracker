@@ -13,6 +13,24 @@ func ExtractYearFromDate(dateStr string) int {
 	return t.Year()
 }
 
+// FilterArtists filters artists based on the provided parameters.
+func FilterArtists(artists []models.Artists, locations []models.Locations, filters models.FilterParameters) []models.Artists {
+	// Optimization: Index locations by Artist ID for O(1) lookup.
+	// This avoids looping through the locations array for every single artist.
+	locMap := make(map[int][]string, len(locations))
+	for _, l := range locations {
+		locMap[l.ID] = l.Locations
+	}
+	var filtered []models.Artists
+	for _, artist := range artists {
+		// Pass the specific locations for this artist to the matcher
+		if matchesFilters(artist, locMap[artist.ID], filters) {
+			filtered = append(filtered, artist)
+		}
+	}
+	return filtered
+}
+
 // ParseLocations collects all unique, formatted locations from the dataset.
 func ParseLocations(locationData []models.Locations) []string {
 	// 1. Use a map to collect unique values (Set)
