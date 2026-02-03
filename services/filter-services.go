@@ -31,6 +31,29 @@ func FilterArtists(artists []models.Artists, locations []models.Locations, filte
 	return filtered
 }
 
+// matchesFilters checks if a single artist satisfies all filter criteria.
+func matchesFilters(artist models.Artists, artistLocs []string, f models.FilterParameters) bool {
+	// 1. Creation Date
+	if artist.CreationDate < f.MinCreationDate || artist.CreationDate > f.MaxCreationDate {
+		return false
+	}
+	// 2. First Album Year
+	year := ExtractYearFromDate(artist.FirstAlbum)
+	if year < f.MinFirstAlbumYear || year > f.MaxFirstAlbumYear {
+		return false
+	}
+	// 3. Members
+	if len(artist.Members) < f.MinMembers || len(artist.Members) > f.MaxMembers {
+		return false
+	}
+	// 4. Locations
+	// If any locations are selected, the artist must match at least one.
+	if len(f.SelectedLocations) > 0 {
+		return hasMatchingLocation(artistLocs, f.SelectedLocations)
+	}
+	return true
+}
+
 // ParseLocations collects all unique, formatted locations from the dataset.
 func ParseLocations(locationData []models.Locations) []string {
 	// 1. Use a map to collect unique values (Set)
