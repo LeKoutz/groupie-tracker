@@ -2,6 +2,12 @@ package services
 
 import (
 	"sync"
+	"groupie-tracker/models"
+	"groupie-tracker/api"
+	"net/http"
+	"encoding/json"
+	"time"
+	"net/url"
 )
 
 // memory cache
@@ -33,8 +39,17 @@ func Geocode(locations []string) map[string]models.Coordinates {
 		resp, err := api.Client.Do(req)
 		if err == nil {
 			var data []models.Coordinates
+			// 3. Decode & Cache
+			if json.NewDecoder(resp.Body).Decode(&data) == nil && len(data) > 0 { // parse the response
+				geoMutex.Lock()
+				geoCache[loc] = data[0] // store the best result in the cache
+				geoMutex.Unlock()
+				results[loc] = data[0]
+			}
+			resp.Body.Close() // prevent memory leaks
+			// Respect the 1-second rate limit policy
+			time.Sleep(1 * time.Second)
+		}
 	}
+	return results
 }
-
-// rate limit policy
-// time.Sleep(1 * time.Second)
