@@ -52,5 +52,5 @@ type ArtistDetails struct {
 // struct to store latitude and longitude
 type Coordinates struct {
 	Lat string `json:"lat"`
-	Lng string `json:"lng"`
+	Lon string `json:"lon"`
 }
