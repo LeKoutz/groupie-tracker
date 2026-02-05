@@ -97,12 +97,14 @@
         // This creates a global variable the other script can see
         window.artistMapData = [
             // Go loops through your data and prints it here
-            {{ range $name, $coords:= .MapData }}
+            {{ range .Relations.SortedLocations }}
+                {{ with $coords := index $.MapData . }}
             {
-                name: "{{ $name }}",
+                name: "{{ . }}",
                 lat: "{{ $coords.Lat }}",
                 lon: "{{ $coords.Lon }}",
             },
+                {{ end }}
             {{ end }}
         ];
     </script>
