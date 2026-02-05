@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
         // Filter out invalid coordinates
         if (!isNaN(lat) && !isNaN(lon)) {
             const marker = L.marker([lat, lon]).addTo(map);
+            // replace hyphens with spaces and convert to uppercase for the display name
+            const displayName = location.name.replace(/[-]/g, ` `).toUpperCase();
             marker.bindPopup(`<b>${displayName}</b>`); // add the display name to the marker
             bounds.push([lat, lon]); // add the marker to the bounds
         }
