@@ -23,8 +23,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const lon = parseFloat(location.lon);
         // Filter out invalid coordinates
         if (!isNaN(lat) && !isNaN(lon)) {
-            const marker = L.marker([lat, lon])
-                .addTo(map);
+            const marker = L.marker([lat, lon]).addTo(map);
+            marker.bindPopup(`<b>${displayName}</b>`); // add the display name to the marker
+            bounds.push([lat, lon]); // add the marker to the bounds
         }
     });
-}
+    // fit the map to the bounds
+    map.fitBounds(bounds);
+});
