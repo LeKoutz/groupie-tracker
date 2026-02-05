@@ -5,4 +5,14 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (!mapElement || !locations)
         return;
+
+    // initialize the map
+    const map = L.map(mapElement).setView([20, 0], 2); // center the map at (20, 0) with zoom level 2
+
+    // add the tile layer
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap &copy; Groupie Tracker",
+        subdomains: 'abcd', // provides multiple tile servers for better performance
+        maxZoom: 19, // maximum zoom level
+    }).addTo(map);
 }
