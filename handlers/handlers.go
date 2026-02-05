@@ -117,7 +117,7 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		HandleErrors(w, http.StatusNotFound, http.StatusText(http.StatusNotFound), err.Error())
 		return
 	}
-	mapData := services.Geocode(relations.SortedLocations) // TODO: service for batch geocoding locations
+	mapData := services.Geocode(relations.SortedLocations)
 	data := models.ArtistDetails{
 		Artist:    *artist,
 		Locations: *locations,
