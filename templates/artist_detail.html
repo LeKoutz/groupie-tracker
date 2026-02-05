@@ -25,65 +25,65 @@
 
             <a href="/" class="back-button">← Back</a>
 
-                <!-- LEFT COLUMN: TITLE + IMAGE -->
-                <div class="artist-left">
-                    <div class="artist-title artist-panel">
-                        <h2>{{ .Artist.Name }}</h2>
-                    </div>
-
-                    <div class="artist-image">
-                        <img src="{{ .Artist.Image }}" alt="{{ .Artist.Name }}">
-                    </div>
+            <!-- LEFT COLUMN: TITLE + IMAGE -->
+            <div class="artist-left">
+                <div class="artist-title artist-panel">
+                    <h2>{{ .Artist.Name }}</h2>
                 </div>
 
-                <!-- INFO COLUMN -->
-                <div class="artist-info-text artist-panel">
+                <div class="artist-image">
+                    <img src="{{ .Artist.Image }}" alt="{{ .Artist.Name }}">
+                </div>
+            </div>
+
+            <!-- INFO COLUMN -->
+            <div class="artist-info-text artist-panel">
+                <p>
+                    <span class="artist-labels">
+                        Members ({{ len .Artist.Members }}):
+                    </span>
+                </p>
+
+                <ul>
+                    {{ range .Artist.Members }}
+                    <li>{{ . }}</li>
+                    {{ end }}
+                </ul>
+
+                <div class="artist-meta">
                     <p>
-                        <span class="artist-labels">
-                            Members ({{ len .Artist.Members }}):
-                        </span>
+                        <span class="artist-labels">Founded:</span>
+                        <span class="inline-info">{{ .Artist.CreationDate }}</span>
                     </p>
-
-                    <ul>
-                        {{ range .Artist.Members }}
-                        <li>{{ . }}</li>
-                        {{ end }}
-                    </ul>
-
-                    <div class="artist-meta">
-                        <p>
-                            <span class="artist-labels">Founded:</span>
-                            <span class="inline-info">{{ .Artist.CreationDate }}</span>
-                        </p>
-                        <p>
-                            <span class="artist-labels">First Release:</span>
-                            <span class="inline-info">{{ .Artist.FirstAlbum }}</span>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- TOUR DATES COLUMN -->
-                <div class="artist-date-loca artist-panel">
-
                     <p>
-                        <span class="artist-labels">Tour Dates:</span>
+                        <span class="artist-labels">First Release:</span>
+                        <span class="inline-info">{{ .Artist.FirstAlbum }}</span>
                     </p>
-
-                    <ul>
-                        {{ range .Relations.SortedLocations }}
-                        {{ $loc := . }}
-                        {{ range index $.Relations.DatesLocations $loc }}
-                        <li>{{ . }}&nbsp;&nbsp;<b>{{ $loc }}</b></li>
-                        {{ end }}
-                        {{ end }}
-                    </ul>
-
                 </div>
-                <!-- MAP COLUMN -->
-                <div class="artist-map artist-panel">
-                    <h3>Concert Locations</h3>
-                    <div id="map"></div> <!-- this is where the map will be displayed-->
-                </div>
+            </div>
+
+            <!-- TOUR DATES COLUMN -->
+            <div class="artist-date-loca artist-panel">
+
+                <p>
+                    <span class="artist-labels">Tour Dates:</span>
+                </p>
+
+                <ul>
+                    {{ range .Relations.SortedLocations }}
+                    {{ $loc := . }}
+                    {{ range index $.Relations.DatesLocations $loc }}
+                    <li>{{ . }}&nbsp;&nbsp;<b>{{ $loc }}</b></li>
+                    {{ end }}
+                    {{ end }}
+                </ul>
+
+            </div>
+            <!-- MAP COLUMN -->
+            <div class="artist-map artist-panel">
+                <h3>Concert Locations</h3>
+                <div id="map"></div> <!-- this is where the map will be displayed-->
+            </div>
             </div>
 
         </section>
@@ -97,14 +97,14 @@
         // This creates a global variable the other script can see
         window.artistMapData = [
             // Go loops through your data and prints it here
-            {{ range .Relations.SortedLocations }}
-                {{ with $coords := index $.MapData . }}
+            {{ range $name:= .Relations.SortedLocations }}
+            {{ with $coords := index $.MapData $name }}
             {
-                name: "{{ . }}",
+                name: "{{ $name }}",
                 lat: "{{ $coords.Lat }}",
                 lon: "{{ $coords.Lon }}",
             },
-                {{ end }}
+            {{ end }}
             {{ end }}
         ];
     </script>
