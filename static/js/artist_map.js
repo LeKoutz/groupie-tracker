@@ -15,4 +15,16 @@ document.addEventListener("DOMContentLoaded", () => {
         subdomains: 'abcd', // provides multiple tile servers for better performance
         maxZoom: 19, // maximum zoom level
     }).addTo(map);
+
+    // create an array to store the bounds of the markers
+    const bounds = [];
+    locations.forEach(location => {
+        const lat = parseFloat(location.lat);
+        const lon = parseFloat(location.lon);
+        // Filter out invalid coordinates
+        if (!isNaN(lat) && !isNaN(lon)) {
+            const marker = L.marker([lat, lon])
+                .addTo(map);
+        }
+    });
 }
