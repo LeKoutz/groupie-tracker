@@ -513,6 +513,28 @@ footer p {
     align-items: start;
 }
 
+/* MAP CONTAINER */
+.artist-map {
+    grid-column: 1 / -1; /* This forces the map to be wide (span all 3 cols) */
+    display: flex;
+    flex-direction: column;
+    min-height: 450px;
+}
+
+.artist-map h3 {
+    margin: 0 0 12px 0;
+    color: #97CE4C;
+    font-size: var(--fs-title);
+}
+
+#map {
+    flex: 1;
+    width: 100%;
+    min-height: 350px;
+    border-radius: 8px;
+    z-index: 1; /* Fixes stacking issues */
+}
+
 /* ARTIST PAGE PANELS */
 .artist-panel {
     background: rgba(60, 62, 68, 0.85);
