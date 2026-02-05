@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,106 +8,108 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"> <!-- needed for the map -->
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
 
-<header>
-    <nav>
-        <a href="/"><h1>GROUPIE TRACKER</h1></a>
-    </nav>
-</header>
+    <header>
+        <nav>
+            <a href="/">
+                <h1>GROUPIE TRACKER</h1>
+            </a>
+        </nav>
+    </header>
 
-<main class="artist-main">
+    <main class="artist-main">
 
-    <section class="artist-wrapper">
+        <section class="artist-wrapper">
 
-        <a href="/" class="back-button">← Back</a>
+            <a href="/" class="back-button">← Back</a>
 
-        <div class="artist-layout">
-            <div class="artist-map artist-panel">
-                <h3>Concert Locations</h3>
-                <div id="map"></div> <!-- this is where the map will be displayed-->
-            </div>
+                <!-- LEFT COLUMN: TITLE + IMAGE -->
+                <div class="artist-left">
+                    <div class="artist-title artist-panel">
+                        <h2>{{ .Artist.Name }}</h2>
+                    </div>
 
-            <!-- LEFT COLUMN: TITLE + IMAGE -->
-            <div class="artist-left">
-                <div class="artist-title artist-panel">
-                    <h2>{{ .Artist.Name }}</h2>
+                    <div class="artist-image">
+                        <img src="{{ .Artist.Image }}" alt="{{ .Artist.Name }}">
+                    </div>
                 </div>
 
-                <div class="artist-image">
-                    <img src="{{ .Artist.Image }}" alt="{{ .Artist.Name }}">
-                </div>
-            </div>
+                <!-- INFO COLUMN -->
+                <div class="artist-info-text artist-panel">
+                    <p>
+                        <span class="artist-labels">
+                            Members ({{ len .Artist.Members }}):
+                        </span>
+                    </p>
 
-            <!-- INFO COLUMN -->
-            <div class="artist-info-text artist-panel">
-                <p>
-                    <span class="artist-labels">
-                        Members ({{ len .Artist.Members }}):
-                    </span>
-                </p>
-
-                <ul>
-                    {{ range .Artist.Members }}
+                    <ul>
+                        {{ range .Artist.Members }}
                         <li>{{ . }}</li>
-                    {{ end }}
-                </ul>
+                        {{ end }}
+                    </ul>
 
-                <div class="artist-meta">
-                    <p>
-                        <span class="artist-labels">Founded:</span>
-                        <span class="inline-info">{{ .Artist.CreationDate }}</span>
-                    </p>
-                    <p>
-                        <span class="artist-labels">First Release:</span>
-                        <span class="inline-info">{{ .Artist.FirstAlbum }}</span>
-                    </p>
+                    <div class="artist-meta">
+                        <p>
+                            <span class="artist-labels">Founded:</span>
+                            <span class="inline-info">{{ .Artist.CreationDate }}</span>
+                        </p>
+                        <p>
+                            <span class="artist-labels">First Release:</span>
+                            <span class="inline-info">{{ .Artist.FirstAlbum }}</span>
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            <!-- TOUR DATES COLUMN -->
-            <div class="artist-date-loca artist-panel">
+                <!-- TOUR DATES COLUMN -->
+                <div class="artist-date-loca artist-panel">
 
-                <p>
-                    <span class="artist-labels">Tour Dates:</span>
-                </p>
+                    <p>
+                        <span class="artist-labels">Tour Dates:</span>
+                    </p>
 
-                <ul>
-                    {{ range .Relations.SortedLocations }}
+                    <ul>
+                        {{ range .Relations.SortedLocations }}
                         {{ $loc := . }}
                         {{ range index $.Relations.DatesLocations $loc }}
-                            <li>{{ . }}&nbsp;&nbsp;<b>{{ $loc }}</b></li>
+                        <li>{{ . }}&nbsp;&nbsp;<b>{{ $loc }}</b></li>
                         {{ end }}
-                    {{ end }}
-                </ul>
+                        {{ end }}
+                    </ul>
 
+                </div>
+                <!-- MAP COLUMN -->
+                <div class="artist-map artist-panel">
+                    <h3>Concert Locations</h3>
+                    <div id="map"></div> <!-- this is where the map will be displayed-->
+                </div>
             </div>
 
-        </div>
+        </section>
 
-    </section>
+    </main>
 
-</main>
-
-<footer>
-    <p>&copy; 2025 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
-</footer>
-<script>
-    // This creates a global variable the other script can see
-    window.artistMapData = [
-        // Go loops through your data and prints it here
-        {{ range $name, $coords := .MapData }}
+    <footer>
+        <p>&copy; 2025 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
+    </footer>
+    <script>
+        // This creates a global variable the other script can see
+        window.artistMapData = [
+            // Go loops through your data and prints it here
+            {{ range $name, $coords:= .MapData }}
             {
                 name: "{{ $name }}",
                 lat: "{{ $coords.Lat }}",
                 lon: "{{ $coords.Lon }}",
             },
-        {{ end }}
-    ];
-</script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
-crossorigin=""></script> <!-- blank means don't share credentials with others -->
-<script src="/static/js/artist_map.js"></script> <!-- loads the map -->
+            {{ end }}
+        ];
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- blank means don't share credentials with others -->
+    <script src="/static/js/artist_map.js"></script> <!-- loads the map -->
 </body>
+
 </html>
