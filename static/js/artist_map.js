@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // check if map element and locations are present
     const mapElement = document.getElementById("map");
     const locations = window.artistMapData;
-    
+
     if (!mapElement || !locations)
         return;
 
@@ -30,8 +30,17 @@ document.addEventListener("DOMContentLoaded", () => {
             bounds.push([lat, lon]); // add the marker to the bounds
         }
     });
+
     if (bounds.length > 0) {
+        // Connect markers with lines (Chronological order from backend)
+        L.polyline(bounds, {
+            color: '#97CE4C',
+            weight: 3,
+            opacity: 0.7,
+            dashArray: '10, 10', // Dashed line for a "tour path" look
+            lineJoin: 'round'
+        }).addTo(map);
         // fit the map to the bounds
-        map.fitBounds(bounds, { padding: [50, 50]});
+        map.fitBounds(bounds, { padding: [50, 50] });
     }
 });
