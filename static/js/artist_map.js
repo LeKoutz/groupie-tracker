@@ -30,6 +30,8 @@ document.addEventListener("DOMContentLoaded", () => {
             bounds.push([lat, lon]); // add the marker to the bounds
         }
     });
+    if (bounds.length > 0) {
     // fit the map to the bounds
-    map.fitBounds(bounds);
+    map.fitBounds(bounds), { padding: [50, 50]};
+    }
 });
