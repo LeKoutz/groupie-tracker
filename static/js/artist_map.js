@@ -27,6 +27,30 @@ document.addEventListener("DOMContentLoaded", () => {
             // replace hyphens with spaces and convert to uppercase for the display name
             const displayName = location.name.replace(/[-]/g, ` `).toUpperCase();
             marker.bindPopup(`<b>${index + 1}.${displayName}</b>`); // add the display name to the marker
+
+            // Highlight path to next location when clicked
+            marker.on('popupopen', () => {
+                // Remove any old temporary lines
+                if (window.currentLine) map.removeLayer(window.currentLine);
+
+                // Is there a next location?
+                if (index < locations.length - 1) {
+                    const nextLoc = locations[index + 1];
+                    const nextLat = parseFloat(nextLoc.lat);
+                    const nextLon = parseFloat(nextLoc.lon);
+
+                    if (!isNaN(nextLat) && !isNaN(nextLon)) {
+                        // Draw a line to the NEXT one
+                        window.currentLine = L.polyline([[lat, lon], [nextLat, nextLon]], {
+                            color: '#ee0c0cff', // Red for "Next Step"
+                            weight: 4,
+                            opacity: 0.9,
+                            dashArray: null
+                        }).addTo(map);
+                    }
+                }
+            });
+
             bounds.push([lat, lon]); // add the marker to the bounds
         }
     });
