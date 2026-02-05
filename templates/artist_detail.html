@@ -91,6 +91,19 @@
 <footer>
     <p>&copy; 2025 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
 </footer>
-
+<script>
+    // This creates a global variable the other script can see
+    window.artistMapData = [
+        // Go loops through your data and prints it here
+        {{ range $name, $coords := .MapData }}
+            {
+                name: "{{ $name }}",
+                lat: "{{ $coords.Lat }}",
+                lon: "{{ $coords.Lon }}",
+            },
+        {{ end }}
+    ];
+</script>
+<script src="/static/js/map.js"></script> <!-- loads the map -->
 </body>
 </html>
