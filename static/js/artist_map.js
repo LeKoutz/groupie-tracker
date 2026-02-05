@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // create an array to store the bounds of the markers
     const bounds = [];
-    locations.forEach(location => {
+    locations.forEach((location, index) => {
         const lat = parseFloat(location.lat);
         const lon = parseFloat(location.lon);
         // Filter out invalid coordinates
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const marker = L.marker([lat, lon]).addTo(map);
             // replace hyphens with spaces and convert to uppercase for the display name
             const displayName = location.name.replace(/[-]/g, ` `).toUpperCase();
-            marker.bindPopup(`<b>${displayName}</b>`); // add the display name to the marker
+            marker.bindPopup(`<b>${index + 1}.${displayName}</b>`); // add the display name to the marker
             bounds.push([lat, lon]); // add the marker to the bounds
         }
     });
