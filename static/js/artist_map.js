@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
     if (bounds.length > 0) {
-    // fit the map to the bounds
-    map.fitBounds(bounds), { padding: [50, 50]};
+        // fit the map to the bounds
+        map.fitBounds(bounds, { padding: [50, 50]});
     }
 });
