@@ -1,6 +1,8 @@
 package main
 
 import (
+	"groupie-tracker/services"
+	"groupie-tracker/models"
 	"groupie-tracker/api"
 	"groupie-tracker/handlers"
 	"log"
@@ -17,8 +19,9 @@ func main () {
 			log.Printf("Failed to load data with error: %v", err)
 			api.SetLoadingStatus(false, false, true)
 		} else {
-			log.Printf("\nData loaded: %d artists, %d locations, %d dates, %d relations\nErrors: %v", len(api.All_Artists), len(api.All_Locations), len(api.All_Dates), len(api.All_Relations), err)
+			log.Printf("\nData loaded: %d artists\nErrors: %v", len(api.All_Artists), err)
 			api.SetLoadingStatus(false, true, false)
+			PrecacheAllLocations(api.All_Relations)
 		}
 	}()
 	// Refresh the data occasionally
@@ -41,3 +44,22 @@ func main () {
 	log.Println("Press CTRL+C to stop the server")
 	log.Fatal(http.ListenAndServe(addr, mux))
 }
+
+func PrecacheAllLocations(relations []models.Relations) {
+	// map to ensure we geocode each location once
+	uniqueLocs := make(map[string]bool)
+	
+	for _, rel := range relations {
+		for locName := range rel.DatesLocations {
+			uniqueLocs[locName] = true
+		}
+	}
+	// convert map to slice
+	var allLocs []string
+	for locName := range uniqueLocs {
+		allLocs = append(allLocs, locName)
+	}
+	log.Printf("Starting location geocoding for %d locations", len(allLocs))
+	go services.Geocode(allLocs)
+	log.Println("Background geocoding complete")
+	}
