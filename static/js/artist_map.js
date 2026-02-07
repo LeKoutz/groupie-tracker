@@ -6,11 +6,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!mapElement || !locations)
         return;
 
-  const validLocations = locations.filter(loc => {
-    const lat = parseFloat(loc.lat);
-    const lon = parseFloat(loc.lon);
-    return !isNaN(lat) && !isNaN(lon);
-  });
+    const validLocations = locations.filter(loc => {
+        const lat = parseFloat(loc.lat);
+        const lon = parseFloat(loc.lon);
+        return !isNaN(lat) && !isNaN(lon);
+    });
 
     // initialize the map
     const map = L.map(mapElement).setView([20, 0], 2); // center the map at (20, 0) with zoom level 2
@@ -23,43 +23,52 @@ document.addEventListener("DOMContentLoaded", () => {
     }).addTo(map);
 
     // create an array to store the bounds of the markers
-  const bounds = [];
-  
+    const bounds = [];
+    window.currentLines = []; // Array to track both lines
+
     validLocations.forEach((location, index) => {
         const lat = parseFloat(location.lat);
         const lon = parseFloat(location.lon);
-        // Filter out invalid coordinates
-      if (!isNaN(lat) && !isNaN(lon)) {
-            const marker = L.marker([lat, lon]).addTo(map);
-            // replace hyphens with spaces and convert to uppercase for the display name
-            const displayName = location.name.replace(/[-]/g, ` `).toUpperCase();
-            marker.bindPopup(`<b>${index + 1}.${displayName}</b>`); // add the display name to the marker
 
-            // Highlight path to next location when clicked
-            marker.on('popupopen', () => {
-                // Remove any old temporary lines
-                if (window.currentLine) map.removeLayer(window.currentLine);
+        const marker = L.marker([lat, lon]).addTo(map);
+        // replace hyphens with spaces and convert to uppercase for the display name
+        const displayName = location.name.replace(/[-]/g, ` `).toUpperCase();
+        marker.bindPopup(`<b>${index + 1}.${displayName}</b>`); // add the display name to the marker
 
-                // Is there a next location?
-                if (index < validLocations.length - 1) {
-                    const nextLoc = validLocations[index + 1];
-                    const nextLat = parseFloat(nextLoc.lat);
-                    const nextLon = parseFloat(nextLoc.lon);
+        // Highlight path to next and previous location when clicked
+        marker.on('popupopen', () => {
+            // 1. Remove any old temporary lines (Next and Previous)
+            if (window.currentLines) {
+                window.currentLines.forEach(line => map.removeLayer(line));
+            }
+            window.currentLines = []; // Array to track both lines
 
-                    if (!isNaN(nextLat) && !isNaN(nextLon)) {
-                        // Draw a line to the NEXT one
-                        window.currentLine = L.polyline([[lat, lon], [nextLat, nextLon]], {
-                            color: '#ee0c0cff', // Red for "Next Step"
-                            weight: 3,
-                            opacity: 0.7,
-                            dashArray: '10,10'
-                        }).addTo(map);
-                    }
-                }
-            });
+            // 2. PREVIOUS STEP (Blue Line)
+            if (index > 0) {
+                const prevLoc = validLocations[index - 1];
+                const prevLine = L.polyline([[lat, lon], [parseFloat(prevLoc.lat), parseFloat(prevLoc.lon)]], {
+                    color: '#3498db', // Blue for "Previous"
+                    weight: 3,
+                    opacity: 0.7,
+                    dashArray: '10, 10'
+                }).addTo(map);
+                window.currentLines.push(prevLine);
+            }
 
-            bounds.push([lat, lon]); // add the marker to the bounds
-        }
+            // 3. NEXT STEP (Red Line)
+            if (index < validLocations.length - 1) {
+                const nextLoc = validLocations[index + 1];
+                const nextLine = L.polyline([[lat, lon], [parseFloat(nextLoc.lat), parseFloat(nextLoc.lon)]], {
+                    color: '#ee0c0cff', // Red for "Next"
+                    weight: 3,
+                    opacity: 0.7,
+                    dashArray: '10, 10'
+                }).addTo(map);
+                window.currentLines.push(nextLine);
+            }
+        });
+
+        bounds.push([lat, lon]);
     });
 
     if (bounds.length > 0) {
