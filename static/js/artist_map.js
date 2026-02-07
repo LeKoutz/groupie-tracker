@@ -17,16 +17,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }).addTo(map);
 
     // create an array to store the bounds of the markers
-    const bounds = [];
+  const bounds = [];
+  let markerCount = 0; // for valid markers
+  
     locations.forEach((location, index) => {
         const lat = parseFloat(location.lat);
         const lon = parseFloat(location.lon);
         // Filter out invalid coordinates
-        if (!isNaN(lat) && !isNaN(lon)) {
+      if (!isNaN(lat) && !isNaN(lon)) {
+            markerCount++;
             const marker = L.marker([lat, lon]).addTo(map);
             // replace hyphens with spaces and convert to uppercase for the display name
             const displayName = location.name.replace(/[-]/g, ` `).toUpperCase();
-            marker.bindPopup(`<b>${index + 1}.${displayName}</b>`); // add the display name to the marker
+            marker.bindPopup(`<b>${markerCount}.${displayName}</b>`); // add the display name to the marker
 
             // Highlight path to next location when clicked
             marker.on('popupopen', () => {
@@ -43,9 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         // Draw a line to the NEXT one
                         window.currentLine = L.polyline([[lat, lon], [nextLat, nextLon]], {
                             color: '#ee0c0cff', // Red for "Next Step"
-                            weight: 4,
-                            opacity: 0.9,
-                            dashArray: null
+                            weight: 3,
+                            opacity: 0.7,
+                            dashArray: '10,10'
                         }).addTo(map);
                     }
                 }
