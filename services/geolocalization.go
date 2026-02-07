@@ -6,13 +6,12 @@ import (
 	"groupie-tracker/api"
 	"net/http"
 	"encoding/json"
-	"time"
 	"net/url"
 )
 
 // memory cache
 var (
-	geoCache map[string]models.Coordinates
+	geoCache = make(map[string]models.Coordinates)
 	geoMutex sync.RWMutex
 )
 
@@ -47,8 +46,6 @@ func Geocode(locations []string) map[string]models.Coordinates {
 				results[loc] = data[0]
 			}
 			resp.Body.Close() // prevent memory leaks
-			// Respect the 1-second rate limit policy
-			time.Sleep(1 * time.Second)
 		}
 	}
 	return results
