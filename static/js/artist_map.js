@@ -22,9 +22,19 @@ document.addEventListener("DOMContentLoaded", () => {
         maxZoom: 19, // maximum zoom level
     }).addTo(map);
 
+    // Layer group for temporary lines (Previous/Next paths)
+    const tempLinesLayer = L.layerGroup().addTo(map);
+
+    // clear temporary lines when popup closes or map is clicked
+    const clearTempLines = () => {
+        tempLinesLayer.clearLayers();
+    };
+
+    map.on('popupclose', clearTempLines);
+    map.on('click', clearTempLines);
+
     // create an array to store the bounds of the markers
     const bounds = [];
-    window.currentLines = []; // Array to track both lines
 
     validLocations.forEach((location, index) => {
         const lat = parseFloat(location.lat);
@@ -37,34 +47,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Highlight path to next and previous location when clicked
         marker.on('popupopen', () => {
-            // 1. Remove any old temporary lines (Next and Previous)
-            if (window.currentLines) {
-                window.currentLines.forEach(line => map.removeLayer(line));
-            }
-            window.currentLines = []; // Array to track both lines
+            // 1. Remove any old temporary lines
+            clearTempLines();
 
             // 2. PREVIOUS STEP (Blue Line)
             if (index > 0) {
                 const prevLoc = validLocations[index - 1];
-                const prevLine = L.polyline([[lat, lon], [parseFloat(prevLoc.lat), parseFloat(prevLoc.lon)]], {
+                L.polyline([[lat, lon], [parseFloat(prevLoc.lat), parseFloat(prevLoc.lon)]], {
                     color: '#3498db', // Blue for "Previous"
                     weight: 3,
                     opacity: 0.7,
                     dashArray: '10, 10'
-                }).addTo(map);
-                window.currentLines.push(prevLine);
+                }).addTo(tempLinesLayer);
             }
 
             // 3. NEXT STEP (Red Line)
             if (index < validLocations.length - 1) {
                 const nextLoc = validLocations[index + 1];
-                const nextLine = L.polyline([[lat, lon], [parseFloat(nextLoc.lat), parseFloat(nextLoc.lon)]], {
+                L.polyline([[lat, lon], [parseFloat(nextLoc.lat), parseFloat(nextLoc.lon)]], {
                     color: '#ee0c0cff', // Red for "Next"
                     weight: 3,
                     opacity: 0.7,
                     dashArray: '10, 10'
-                }).addTo(map);
-                window.currentLines.push(nextLine);
+                }).addTo(tempLinesLayer);
             }
         });
 
