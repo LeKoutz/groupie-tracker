@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groupie Tracker: {{ .Artist.Name }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<header>
+    <nav>
+        <a href="/"><h1>GROUPIE TRACKER</h1></a>
+    </nav>
+</header>
+
+<main class="artist-main">
+
+    <section class="artist-wrapper">
+
+        <a href="/" class="back-button">← Back</a>
+
+        <div class="artist-layout">
+
+            <!-- LEFT COLUMN: TITLE + IMAGE -->
+            <div class="artist-left">
+                <div class="artist-title artist-panel">
+                    <h2>{{ .Artist.Name }}</h2>
+                </div>
+
+                <div class="artist-image">
+                    <img src="{{ .Artist.Image }}" alt="{{ .Artist.Name }}">
+                </div>
+            </div>
+
+            <!-- INFO COLUMN -->
+            <div class="artist-info-text artist-panel">
+                <p>
+                    <span class="artist-labels">
+                        Members ({{ len .Artist.Members }}):
+                    </span>
+                </p>
+
+                <ul>
+                    {{ range .Artist.Members }}
+                        <li>{{ . }}</li>
+                    {{ end }}
+                </ul>
+
+                <div class="artist-meta">
+                    <p>
+                        <span class="artist-labels">Founded:</span>
+                        <span class="inline-info">{{ .Artist.CreationDate }}</span>
+                    </p>
+                    <p>
+                        <span class="artist-labels">First Release:</span>
+                        <span class="inline-info">{{ .Artist.FirstAlbum }}</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- TOUR DATES COLUMN -->
+            <div class="artist-date-loca artist-panel">
+
+                <p>
+                    <span class="artist-labels">Tour Dates:</span>
+                </p>
+
+                <ul>
+                    {{ range .Relations.SortedLocations }}
+                        {{ $loc := . }}
+                        {{ range index $.Relations.DatesLocations $loc }}
+                            <li>{{ . }}&nbsp;&nbsp;<b>{{ $loc }}</b></li>
+                        {{ end }}
+                    {{ end }}
+                </ul>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <p>&copy; 2025 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
+</footer>
+
+</body>
+</html>

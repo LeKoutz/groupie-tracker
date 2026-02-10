@@ -4,24 +4,34 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"groupie-tracker/models"
 	"net/http"
+	"sync"
 	"time"
-)
 
-const (
-	ARTISTS_API		= "https://groupietrackers.herokuapp.com/api/artists"
-	LOCATIONS_API	= "https://groupietrackers.herokuapp.com/api/locations"
-	DATES_API		= "https://groupietrackers.herokuapp.com/api/dates"
-	RELATIONS_API	= "https://groupietrackers.herokuapp.com/api/relation"
+	"groupie-tracker/models"
 )
 
 var (
-	All_Artists		[]models.Artists
-	All_Locations	[]models.Locations
-	All_Dates		[]models.Dates
-	All_Relations	[]models.Relations
+	ARTISTS_API   = "https://groupietrackers.herokuapp.com/api/artists"
+	LOCATIONS_API = "https://groupietrackers.herokuapp.com/api/locations"
+	DATES_API     = "https://groupietrackers.herokuapp.com/api/dates"
+	RELATIONS_API = "https://groupietrackers.herokuapp.com/api/relation"
 )
+
+var (
+	All_Artists   []models.Artists
+	All_Locations []models.Locations
+	All_Dates     []models.Dates
+	All_Relations []models.Relations
+	Status        LoadingStatus
+	statusMutex   sync.RWMutex
+)
+
+type LoadingStatus struct {
+	IsLoading bool
+	IsLoaded  bool
+	HasFailed bool
+}
 
 // InitializeData fetches data from all APIs asynchronously.
 // If a fetch fails, it retries up to 2 times.
@@ -223,4 +233,55 @@ func FetchRelationsWithContext(ctx context.Context) ([]models.Relations, error) 
 		return nil, fmt.Errorf("JSON decode failed: %v", err)
 	}
 	return relations.Index, nil
+}
+
+func SetLoadingStatus(loading, loaded, failed bool) {
+	statusMutex.Lock()
+	defer statusMutex.Unlock()
+	Status = LoadingStatus{
+		IsLoading: loading,
+		IsLoaded:  loaded,
+		HasFailed: failed,
+	}
+}
+
+func GetLoadingStatus() LoadingStatus {
+	statusMutex.RLock()
+	defer statusMutex.RUnlock()
+	return Status
+}
+
+// RefreshData automatically refreshes the API data every 24hours if the fetch succeeded,
+// or every 1 second if it failed
+func RefreshData() {
+	GetLoadingStatus()
+	for {
+		if GetLoadingStatus().IsLoading {
+			continue
+		} else if GetLoadingStatus().IsLoaded {
+			time.Sleep(24 * time.Hour)
+			fmt.Println("Refreshing data...")
+			SetLoadingStatus(true, false, false)
+			err := InitializeData()
+			if err != nil {
+				SetLoadingStatus(false, false, true)
+				continue
+			} else {
+				SetLoadingStatus(false, true, false)
+				continue
+			}
+		} else if GetLoadingStatus().HasFailed {
+			time.Sleep(1 * time.Second)
+			fmt.Println("Refreshing data...")
+			SetLoadingStatus(true, false, false)
+			err := InitializeData()
+			if err != nil {
+				SetLoadingStatus(false, false, true)
+				continue
+			} else {
+				SetLoadingStatus(false, true, false)
+				continue
+			}
+		}
+	}
 }

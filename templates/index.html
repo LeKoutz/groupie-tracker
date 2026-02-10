@@ -1,0 +1,109 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Groupie Tracker: Home</title> 
+    <link rel="stylesheet" href="/static/css/style.css"> 
+    <script>
+  document.documentElement.classList.add("js-enabled");
+</script>
+</head>
+<body>
+
+<header>
+    <nav>
+        <a href="/"><h1>GROUPIE TRACKER</h1></a>
+    </nav>
+</header>
+
+<main class="artist-main">
+    <div class="search-container">
+        <form action="/" method="GET" class="search-form">
+            <input
+                type="text"
+                name="search"
+                placeholder="Search..."
+                value="{{.SearchQuery}}"
+                autocomplete="off"
+            >
+            <select name="category" class="search-category">
+                <option value="all">All</option>
+                <option value="artist">Artist/Band</option>
+                <option value="member">Member</option>
+                <option value="first_album">First Album</option>
+                <option value="creation_date">Creation Date</option>
+                <option value="concert">Concert</option>
+            </select>
+            <button type="submit">Search</button>
+        </form>
+        <div class="search-suggestions" style="display: none;"></div>
+        {{if .NoResults}}
+        <div class="search-results">
+            <p class="no-results">No results found</p>
+        </div>
+        {{end}}
+        {{if .SearchResults}}
+        <div class="search-results">
+            <ul>
+                {{range .SearchResults}}
+                    <li>
+                        <a href="/artist/{{.ID}}">{{.Label}}</a>
+                </li>
+                {{end}}
+            </ul>
+        </div>
+        {{end}}
+    </div>
+    <div id="artist-list" class="artist-grid">
+        {{range .Artists}}
+            <div href="/artist/{{.ID}}" class="artist-card">
+                <a href="/artist/{{.ID}}" class="artist-tag">
+                <div class="card-image">
+                    <img src="{{.Image}}" alt="{{.Name}}">
+                </div>
+
+                <div class="card-content">
+                    <section class="band-info">
+                        <h3>{{.Name}}</h3>
+                    </section>
+
+                    <section class="card-info">
+                        <p><strong>Members:</strong>
+                        {{ if eq (len .Members) 1 }}
+                            Solo
+                        {{ else }}
+                            {{ len .Members }}
+                        {{ end }}
+                        </p>
+                        <p><strong>Start Year:</strong> {{.CreationDate}}</p>
+                        <p><strong>First Release:</strong> {{.FirstAlbum}}</p>
+                        <a href="/artist/{{.ID}}" class="green-button">More Info →</a>
+                    </section>
+                </div>
+                </a>
+            </div>
+        {{end}}
+    </div>
+</main>
+<script src="/static/js/search_suggestions.js"></script>
+
+<footer>
+    <p>&copy; 2026 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
+</footer>
+
+<button onclick="window.scrollTo(0,0)" id="scrollTopBtn" title="Go to top">▲</button>
+
+<script>
+// show button when scrolling down
+window.onscroll = function() {
+var btn = document.getElementById("scrollTopBtn");
+if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+  btn.style.display = "block";
+} else {
+  btn.style.display = "none";
+}
+};
+</script>
+</body>
+</html>
