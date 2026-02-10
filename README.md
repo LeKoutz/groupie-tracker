@@ -26,7 +26,7 @@ A web application that displays information about your favorite artists and band
 
 1. Clone the repository:
 ```bash
-git clone https://platform.zone01.gr/git/gkoutzos/groupie-tracker-search-bar.git
+git clone https://github.com/LeKoutz/groupie-tracker.git
 cd groupie-tracker-search-bar
 ```
 
