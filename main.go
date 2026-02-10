@@ -48,7 +48,7 @@ func main () {
 func PrecacheAllLocations(relations []models.Relations) {
 	// map to ensure we geocode each location once
 	uniqueLocs := make(map[string]bool)
-	
+
 	for _, rel := range relations {
 		for locName := range rel.DatesLocations {
 			uniqueLocs[locName] = true
@@ -60,6 +60,6 @@ func PrecacheAllLocations(relations []models.Relations) {
 		allLocs = append(allLocs, locName)
 	}
 	log.Printf("Starting location geocoding for %d locations", len(allLocs))
-	go services.Geocode(allLocs)
+	services.Geocode(allLocs)
 	log.Println("Background geocoding complete")
-	}
+}
