@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <i style="background: #3498db;"></i> Previous Location
             </div>
             <div class="legend-item">
-                <i style="background: #97CE4C; border-bottom: 2px dotted #fff;"></i> Full Route
+                <i style="background: #97CE4C;"></i> Full Route
             </div>
         `;
         return div;
