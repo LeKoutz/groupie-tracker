@@ -535,6 +535,50 @@ footer p {
     z-index: 1; /* Fixes stacking issues */
 }
 
+/* MAP LEGEND */
+.info.legend {
+    background: rgba(20, 27, 35, 0.9);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #97CE4C;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    font-family: 'QuestrialLocal', sans-serif;
+    color: #e0e0e0;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.info.legend h4 {
+    margin: 0 0 10px;
+    font-size: var(--fs-body);
+    font-weight: bold;
+    color: #97CE4C;
+    text-align: center;
+    text-shadow: 0 0 5px rgba(151, 206, 76, 0.4);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: var(--fs-small);
+}
+
+.legend-item:last-child {
+    margin-bottom: 0;
+}
+
+/* The colored boxes/lines */
+.legend-item i {
+    width: 25px;
+    height: 4px;
+    margin-right: 8px;
+    display: inline-block;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
 /* ARTIST PAGE PANELS */
 .artist-panel {
     background: rgba(60, 62, 68, 0.85);
