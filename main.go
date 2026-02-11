@@ -2,7 +2,6 @@ package main
 
 import (
 	"groupie-tracker/services"
-	"groupie-tracker/models"
 	"groupie-tracker/api"
 	"groupie-tracker/handlers"
 	"log"
@@ -11,17 +10,21 @@ import (
 )
 
 func main () {
+	// load the file instantly
+	services.InitGeoCache()
+	
 	api.SetLoadingStatus(true, false, false)
 	// Initialize the data structures
 	go func() {
 		err := api.InitializeData()
 		if err != nil {
-			log.Printf("Failed to load data with error: %v", err)
+			log.Fatalf("Failed to load data with error: %v", err)
 			api.SetLoadingStatus(false, false, true)
 		} else {
 			log.Printf("\nData loaded: %d artists\nErrors: %v", len(api.All_Artists), err)
 			api.SetLoadingStatus(false, true, false)
-			PrecacheAllLocations(api.All_Relations)
+			
+			go services.FillCacheBackground()
 		}
 	}()
 	// Refresh the data occasionally
@@ -43,23 +46,4 @@ func main () {
 	log.Println("Server starting on: http://localhost:" + port)
 	log.Println("Press CTRL+C to stop the server")
 	log.Fatal(http.ListenAndServe(addr, mux))
-}
-
-func PrecacheAllLocations(relations []models.Relations) {
-	// map to ensure we geocode each location once
-	uniqueLocs := make(map[string]bool)
-
-	for _, rel := range relations {
-		for locName := range rel.DatesLocations {
-			uniqueLocs[locName] = true
-		}
-	}
-	// convert map to slice
-	var allLocs []string
-	for locName := range uniqueLocs {
-		allLocs = append(allLocs, locName)
-	}
-	log.Printf("Starting location geocoding for %d locations", len(allLocs))
-	services.Geocode(allLocs)
-	log.Println("Background geocoding complete")
 }
