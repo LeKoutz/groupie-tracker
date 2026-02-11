@@ -88,9 +88,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // Connect markers with lines (Chronological order from backend)
         fullRouteLine = L.polyline(bounds, {
             color: '#97CE4C',
-            weight: 3,
+            weight: 4,
             opacity: 0.7,
-            dashArray: '10, 10', // Dashed line for a "tour path" look
+            dashArray: '5, 10', // Dashed line for a "tour path" look
             lineJoin: 'round'
         }).addTo(map);
         // fit the map to the bounds
