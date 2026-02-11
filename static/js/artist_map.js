@@ -24,14 +24,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Layer group for temporary lines (Previous/Next paths)
     const tempLinesLayer = L.layerGroup().addTo(map);
+    // store reference to green line
+    let fullRouteLine = null;
 
-    // clear temporary lines when popup closes or map is clicked
-    const clearTempLines = () => {
-        tempLinesLayer.clearLayers();
+    const resetMap = () => {
+        tempLinesLayer.clearLayers(); // remove blue/red lines
+
+        if (fullRouteLine && !map.hasLayer(fullRouteLine)) {
+            fullRouteLine.addTo(map);
+        }
     };
 
-    map.on('popupclose', clearTempLines);
-    map.on('click', clearTempLines);
+    map.on('popupclose', resetMap);
+    map.on('click', resetMap);
 
     // create an array to store the bounds of the markers
     const bounds = [];
@@ -48,7 +53,11 @@ document.addEventListener("DOMContentLoaded", () => {
         // Highlight path to next and previous location when clicked
         marker.on('popupopen', () => {
             // 1. Remove any old temporary lines
-            clearTempLines();
+            tempLinesLayer.clearLayers();
+
+            if (fullRouteLine) {
+                fullRouteLine.remove();
+            }
 
             // 2. PREVIOUS STEP (Blue Line)
             if (index > 0) {
@@ -72,13 +81,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 }).addTo(tempLinesLayer);
             }
         });
-
         bounds.push([lat, lon]);
     });
 
     if (bounds.length > 0) {
         // Connect markers with lines (Chronological order from backend)
-        L.polyline(bounds, {
+        fullRouteLine = L.polyline(bounds, {
             color: '#97CE4C',
             weight: 3,
             opacity: 0.7,
@@ -88,4 +96,23 @@ document.addEventListener("DOMContentLoaded", () => {
         // fit the map to the bounds
         map.fitBounds(bounds, { padding: [50, 50] });
     }
+    // --- LEGEND ---
+    const legend = L.control({ position: "bottomright" });
+    legend.onAdd = function(map) {
+        const div = L.DomUtil.create("div", "info legend");
+        div.innerHTML = `
+            <h4>Tour Path</h4>
+            <div class="legend-item">
+                <i style="background: #ee0c0cff;"></i> Next Location
+            </div>
+            <div class="legend-item">
+                <i style="background: #3498db;"></i> Previous Location
+            </div>
+            <div class="legend-item">
+                <i style="background: #97CE4C; border-bottom: 2px dotted #fff;"></i> Full Route
+            </div>
+        `;
+        return div;
+    };
+    legend.addTo(map);
 });
