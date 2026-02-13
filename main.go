@@ -1,6 +1,7 @@
 package main
 
 import (
+	"groupie-tracker/services"
 	"groupie-tracker/api"
 	"groupie-tracker/handlers"
 	"log"
@@ -9,16 +10,21 @@ import (
 )
 
 func main () {
+	// load the file instantly
+	services.InitGeoCache()
+	
 	api.SetLoadingStatus(true, false, false)
 	// Initialize the data structures
 	go func() {
 		err := api.InitializeData()
 		if err != nil {
-			log.Printf("Failed to load data with error: %v", err)
+			log.Fatalf("Failed to load data with error: %v", err)
 			api.SetLoadingStatus(false, false, true)
 		} else {
-			log.Printf("\nData loaded: %d artists, %d locations, %d dates, %d relations\nErrors: %v", len(api.All_Artists), len(api.All_Locations), len(api.All_Dates), len(api.All_Relations), err)
+			log.Printf("\nData loaded: %d artists\nErrors: %v", len(api.All_Artists), err)
 			api.SetLoadingStatus(false, true, false)
+			
+			go services.FillCacheBackground()
 		}
 	}()
 	// Refresh the data occasionally
