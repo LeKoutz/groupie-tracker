@@ -1,0 +1,118 @@
+document.addEventListener("DOMContentLoaded", () => {
+    // check if map element and locations are present
+    const mapElement = document.getElementById("map");
+    const locations = window.artistMapData;
+
+    if (!mapElement || !locations)
+        return;
+
+    const validLocations = locations.filter(loc => {
+        const lat = parseFloat(loc.lat);
+        const lon = parseFloat(loc.lon);
+        return !isNaN(lat) && !isNaN(lon);
+    });
+
+    // initialize the map
+    const map = L.map(mapElement).setView([20, 0], 2); // center the map at (20, 0) with zoom level 2
+
+    // add the tile layer
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap &copy; Groupie Tracker",
+        subdomains: 'abc', // provides multiple tile servers for better performance
+        maxZoom: 19, // maximum zoom level
+    }).addTo(map);
+
+    // Layer group for temporary lines (Previous/Next paths)
+    const tempLinesLayer = L.layerGroup().addTo(map);
+    // store reference to green line
+    let fullRouteLine = null;
+
+    const resetMap = () => {
+        tempLinesLayer.clearLayers(); // remove blue/red lines
+
+        if (fullRouteLine && !map.hasLayer(fullRouteLine)) {
+            fullRouteLine.addTo(map);
+        }
+    };
+
+    map.on('popupclose', resetMap);
+    map.on('click', resetMap);
+
+    // create an array to store the bounds of the markers
+    const bounds = [];
+
+    validLocations.forEach((location, index) => {
+        const lat = parseFloat(location.lat);
+        const lon = parseFloat(location.lon);
+
+        const marker = L.marker([lat, lon]).addTo(map);
+        // replace hyphens with spaces and convert to uppercase for the display name
+        const displayName = location.name.replace(/[-]/g, ` `).toUpperCase();
+        marker.bindPopup(`<b>${index + 1}.${displayName}</b>`); // add the display name to the marker
+
+        // Highlight path to next and previous location when clicked
+        marker.on('popupopen', () => {
+            // 1. Remove any old temporary lines
+            tempLinesLayer.clearLayers();
+
+            if (fullRouteLine) {
+                fullRouteLine.remove();
+            }
+
+            // 2. PREVIOUS STEP (Blue Line)
+            if (index > 0) {
+                const prevLoc = validLocations[index - 1];
+                L.polyline([[lat, lon], [parseFloat(prevLoc.lat), parseFloat(prevLoc.lon)]], {
+                    color: '#3498db', // Blue for "Previous"
+                    weight: 3,
+                    opacity: 0.7,
+                    dashArray: '10, 10'
+                }).addTo(tempLinesLayer);
+            }
+
+            // 3. NEXT STEP (Red Line)
+            if (index < validLocations.length - 1) {
+                const nextLoc = validLocations[index + 1];
+                L.polyline([[lat, lon], [parseFloat(nextLoc.lat), parseFloat(nextLoc.lon)]], {
+                    color: '#ee0c0cff', // Red for "Next"
+                    weight: 3,
+                    opacity: 0.7,
+                    dashArray: '10, 10'
+                }).addTo(tempLinesLayer);
+            }
+        });
+        bounds.push([lat, lon]);
+    });
+
+    if (bounds.length > 0) {
+        // Connect markers with lines (Chronological order from backend)
+        fullRouteLine = L.polyline(bounds, {
+            color: '#97CE4C',
+            weight: 4,
+            opacity: 0.7,
+            dashArray: '5, 10', // Dashed line for a "tour path" look
+            lineJoin: 'round'
+        }).addTo(map);
+        // fit the map to the bounds
+        map.fitBounds(bounds, { padding: [50, 50] });
+    }
+    // --- LEGEND ---
+    const legend = L.control({ position: "bottomright" });
+    legend.onAdd = function(map) {
+        const div = L.DomUtil.create("div", "info legend");
+        div.innerHTML = `
+            <h4>Tour Path</h4>
+            <div class="legend-item">
+                <i style="background: #ee0c0cff;"></i> Next Location
+            </div>
+            <div class="legend-item">
+                <i style="background: #3498db;"></i> Previous Location
+            </div>
+            <div class="legend-item">
+                <i style="background: #97CE4C;"></i> Full Route
+            </div>
+        `;
+        return div;
+    };
+    legend.addTo(map);
+});
