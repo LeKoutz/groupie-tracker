@@ -840,3 +840,30 @@ margin-bottom: 0;
     box-shadow: 0 0 15px #97CE4C, 0 0 30px rgba(151, 206, 76, 0.4);
     transform: translateY(-5px) scale(1.1);
 }
+
+/* MOBILE LEGEND ADJUSTMENTS */
+@media (max-width: 575.98px) {
+
+    .info.legend {
+        padding: 6px 8px;
+        margin-right: 5px;
+        margin-bottom: 25px;
+        max-width: 120px;
+    }
+
+    .info.legend h4 {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+
+    .legend-item {
+        font-size: 0.7rem;
+        margin-bottom: 2px;
+    }
+
+    .legend-item i {
+        width: 16px;
+        height: 3px;           
+        margin-right: 5px;      
+    }
+}
