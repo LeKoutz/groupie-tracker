@@ -618,3 +618,57 @@ margin-bottom: 0;
     font-size: 0.98rem;
     color: #f7f7f7;
 }
+
+/* ========================================
+   SCROLL TO TOP BUTTON
+   ======================================== */
+#scrollTopBtn {
+    display: none;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1001;
+    font-size: 1.5rem;
+    background-color: rgba(20, 27, 35, 0.8);
+    color: #97CE4C;
+    cursor: pointer;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(4px);
+    border: 1px solid #97CE4C;
+}
+
+#scrollTopBtn:hover {
+    background-color: #97CE4C;
+    color: #20232A;
+    box-shadow: 0 0 15px #97CE4C, 0 0 30px rgba(151, 206, 76, 0.4);
+    transform: translateY(-5px) scale(1.1);
+}
+
+/* MOBILE LEGEND ADJUSTMENTS */
+@media (max-width: 575.98px) {
+
+    .info.legend {
+        padding: 6px 8px;
+        margin-right: 5px;
+        margin-bottom: 25px;
+        max-width: 120px;
+    }
+
+    .info.legend h4 {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+
+    .legend-item {
+        font-size: 0.7rem;
+        margin-bottom: 2px;
+    }
+
+    .legend-item i {
+        width: 16px;
+        height: 3px;           
+        margin-right: 5px;      
+    }
+}
