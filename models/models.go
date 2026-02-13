@@ -46,4 +46,11 @@ type ArtistDetails struct {
 	Locations	Locations
 	Dates		Dates
 	Relations	Relations
+	MapData map[string]Coordinates
+}
+
+// struct to store latitude and longitude
+type Coordinates struct {
+	Lat string `json:"lat"`
+	Lon string `json:"lon"`
 }
