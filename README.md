@@ -30,8 +30,8 @@ A web application that displays information about your favorite artists and band
 
 1. Clone the repository:
 ```bash
-git clone https://platform.zone01.gr/git/gkoutzos/groupie-tracker.git
-cd groupie-tracker
+git clone https://platform.zone01.gr/git/gkoutzos/groupie-tracker-Geolocalization.git
+cd groupie-tracker-Geolocalization
 ```
 
 2. Run the application:
