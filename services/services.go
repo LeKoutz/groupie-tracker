@@ -120,6 +120,10 @@ func formatLocationName(loc string) string {
 		left = titleCase(left) // title-case city
 		right = titleCase(right) // title-case country
 		// special cases
+		// Netherlands Antilles dissolved in 2010 and Willemstad is now the capital of Curacao
+		if right == "Netherlands Antilles" {
+			right = "Curacao"
+		}
 		if right == "Usa" {
 			right = "USA"
 		}
