@@ -196,17 +196,69 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "This request method is not supported for the requested resource. Use GET request instead.")
 		return
 	}
+
+	// Parse filter parameters
+	filters := parseFilterParams(r)
+
 	query := r.URL.Query().Get("search")
-	if query == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("[]"))
-		return
+
+	// We will fetch the filtered list of artists first
+	filteredArtists := services.FilterArtists(api.All_Artists, api.All_Locations, filters)
+
+	var SearchResults []search.SearchResult
+
+	if query != "" {
+		// If there is a text query, search within the filtered artists
+		SearchResults = search.Search(query, filteredArtists, services.GetRelationsByID)
+
+		category := r.URL.Query().Get("category")
+		if category != "" && category != "all" {
+			SearchResults = search.FilterSearch(SearchResults, category)
+		}
+	} else {
+
+		// Converting models.Artists to search.SearchResult
+		for _, artist := range filteredArtists {
+			SearchResults = append(SearchResults, search.SearchResult{
+				Label:    artist.Name,
+				ID:       artist.ID,
+				Category: "artist",
+				Method:   search.MethodContains,
+			})
+		}
 	}
-	SearchResults := search.Search(query, api.All_Artists, services.GetRelationsByID)
-	category := r.URL.Query().Get("category")
-	if category != "" && category != "all" {
-		SearchResults = search.FilterSearch(SearchResults, category)
-	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(SearchResults)
+}
+
+func parseFilterParams(r *http.Request) models.FilterParameters {
+	params := r.URL.Query()
+
+	// Helper to parse int with default
+	parseInt := func(key string, defaultValue int) int {
+		if val := params.Get(key); val != "" {
+			if i, err := strconv.Atoi(val); err == nil {
+				return i
+			}
+		}
+		return defaultValue
+	}
+
+	// Set sensible defaults for "Max" values to ensure we include everything if not specified.
+
+	return models.FilterParameters{
+		MinCreationDate:   parseInt("min_creation_date", 0),
+		MaxCreationDate:   parseInt("max_creation_date", 3000),
+		MinFirstAlbumYear: parseInt("min_first_album_year", 0),
+		MaxFirstAlbumYear: parseInt("max_first_album_year", 3000),
+		MinMembers:        parseInt("min_members", 0),
+		MaxMembers:        parseInt("max_members", 100),
+		SelectedLocations: func() []string {
+			if locs := params.Get("locations"); locs != "" {
+				return strings.Split(locs, ",")
+			}
+			return nil
+		}(),
+	}
 }
