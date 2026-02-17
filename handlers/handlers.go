@@ -3,16 +3,17 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"groupie-tracker/api"
-	"groupie-tracker/models"
-	"groupie-tracker/services"
-	"groupie-tracker/search"
 	"html/template"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"groupie-tracker/api"
+	"groupie-tracker/models"
+	"groupie-tracker/search"
+	"groupie-tracker/services"
 )
 
 // Parse templates once before server startup
@@ -52,7 +53,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		Artists       []models.Artists
 		SearchQuery   string
 		SearchResults []search.SearchResult
-		NoResults	  bool
+		NoResults     bool
 	}{
 		Artists:       api.All_Artists,
 		SearchQuery:   query,
@@ -89,7 +90,7 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if api.GetLoadingStatus().IsLoading {
-		http.Redirect(w, r, "/loading?requested="+ url.QueryEscape(r.URL.Path), http.StatusSeeOther)
+		http.Redirect(w, r, "/loading?requested="+url.QueryEscape(r.URL.Path), http.StatusSeeOther)
 		return
 	} else if api.GetLoadingStatus().HasFailed {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to load the data. Please try again later.")
@@ -209,4 +210,41 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(SearchResults)
+}
+
+// FilterHandler returns filtered artists as full objects for the main grid view.
+func FilterHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "This request method is not supported for the requested resource. Use GET request instead.")
+		return
+	}
+
+	// 1. Filter by criteria (Range, Checkboxes, Location)
+	filters := parseFilterParams(r)
+	filteredArtists := services.FilterArtists(api.All_Artists, api.All_Locations, filters)
+
+	// 2. Filter by search query if present
+	if query := r.URL.Query().Get("search"); query != "" {
+		// Search returns IDs. We need to intersect this with our already filtered list.
+		searchResults := search.Search(query, filteredArtists, services.GetRelationsByID)
+
+		// Optimize intersection using a map
+		matchedIDs := make(map[int]bool, len(searchResults))
+		for _, res := range searchResults {
+			matchedIDs[res.ID] = true
+		}
+
+		// In-place filtering to avoid allocating a new slice if possible,
+		// but standard append is safer and cleaner.
+		var matchedArtists []models.Artists
+		for _, artist := range filteredArtists {
+			if matchedIDs[artist.ID] {
+				matchedArtists = append(matchedArtists, artist)
+			}
+		}
+		filteredArtists = matchedArtists
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(filteredArtists)
 }
