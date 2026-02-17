@@ -25,6 +25,7 @@ var (
 	All_Relations []models.Relations
 	Status        LoadingStatus
 	statusMutex   sync.RWMutex
+	Client        = &http.Client{Timeout: 10 * time.Second}
 )
 
 type LoadingStatus struct {
