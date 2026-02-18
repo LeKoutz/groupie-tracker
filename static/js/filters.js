@@ -145,4 +145,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     locationInput.addEventListener("input", fetchFilteredResults);
+
+    // Reset Button Logic
+    const resetButton = document.getElementById("reset-filters");
+    if (resetButton) {
+        resetButton.addEventListener("click", () => {
+            // Reset Range Inputs to min/max attributes
+            minCreationDateInput.value = minCreationDateInput.min;
+            maxCreationDateInput.value = maxCreationDateInput.max;
+            minFirstAlbumInput.value = minFirstAlbumInput.min;
+            maxFirstAlbumInput.value = maxFirstAlbumInput.max;
+
+            // Uncheck all member checkboxes
+            memberCheckboxes.forEach(cb => cb.checked = false);
+
+            // Clear location input
+            locationInput.value = "";
+
+            // Update display text and fetch original results
+            updateDisplayValues();
+            fetchFilteredResults();
+        });
+    }
 });

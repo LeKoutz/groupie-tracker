@@ -65,8 +65,8 @@
                 <div class="filter-group">
                     <label>Number of Members</label>
                     <div class="checkbox-group">
-                        {{range $i, $e := $.Stats.MaxMembers | iterate}}
-                        <label><input type="checkbox" class="member-checkbox" value="{{$e}}"> {{$e}}</label>
+                        {{range .Stats.MemberCounts}}
+                        <label><input type="checkbox" class="member-checkbox" value="{{.}}"> {{.}}</label>
                         {{end}}
                     </div>
                 </div>
@@ -80,6 +80,9 @@
                         <option value="{{.}}">
                             {{end}}
                     </datalist>
+                </div>
+                <div class="filter-actions">
+                    <button id="reset-filters" class="reset-button">Reset Filters</button>
                 </div>
             </div>
 
