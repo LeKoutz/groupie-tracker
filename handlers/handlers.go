@@ -157,7 +157,7 @@ func HandleErrors(w http.ResponseWriter, statusCode int, message, response strin
 	}
 	w.WriteHeader(statusCode)
 	if err := error_tmpl.Execute(w, errorData); err != nil {
-		http.Error(w, fmt.Sprintf("Error %d: %s %s", statusCode, message, response), statusCode)
+		fmt.Printf("Error %d: %s %s\n", statusCode, message, response)
 		return
 	}
 }
