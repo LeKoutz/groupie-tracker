@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -52,12 +53,16 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		Artists       []models.Artists
 		SearchQuery   string
 		SearchResults []search.SearchResult
-		NoResults	  bool
+		NoResults     bool
+		Stats         models.FilterStats
+		Locations     []string
 	}{
 		Artists:       api.All_Artists,
 		SearchQuery:   query,
 		SearchResults: SearchResults,
 		NoResults:     false,
+		Stats:         calculateFilterStats(api.All_Artists),
+		Locations:     getAllLocations(api.All_Locations),
 	}
 	// If query exists and SearchResults != empty, show search results only
 	if query != "" && len(SearchResults) > 0 {
@@ -155,10 +160,8 @@ func HandleErrors(w http.ResponseWriter, statusCode int, message, response strin
 		Message:    http.StatusText(statusCode),
 		Response:   response,
 	}
-	w.WriteHeader(statusCode)
 	if err := error_tmpl.Execute(w, errorData); err != nil {
-		fmt.Printf("Error %d: %s %s\n", statusCode, message, response)
-		return
+		http.Error(w, fmt.Sprintf("Error %d: %s %s", statusCode, message, response), statusCode)
 	}
 }
 
@@ -216,7 +219,6 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 			SearchResults = search.FilterSearch(SearchResults, category)
 		}
 	} else {
-
 		// Converting models.Artists to search.SearchResult
 		for _, artist := range filteredArtists {
 			SearchResults = append(SearchResults, search.SearchResult{
@@ -261,4 +263,48 @@ func parseFilterParams(r *http.Request) models.FilterParameters {
 			return nil
 		}(),
 	}
+}
+
+// calculateFilterStats extracts min/max values and unique member counts from artists
+func calculateFilterStats(artists []models.Artists) models.FilterStats {
+	stats := models.FilterStats{
+		MinCreationDate:   9999,
+		MaxCreationDate:   0,
+		MinFirstAlbumYear: 9999,
+		MaxFirstAlbumYear: 0,
+	}
+
+	memberCountMap := make(map[int]bool)
+
+	for _, artist := range artists {
+		if artist.CreationDate < stats.MinCreationDate {
+			stats.MinCreationDate = artist.CreationDate
+		}
+		if artist.CreationDate > stats.MaxCreationDate {
+			stats.MaxCreationDate = artist.CreationDate
+		}
+		// Extract year using the services function
+		year := services.ExtractYearFromDate(artist.FirstAlbum)
+		if year > 0 {
+			if year < stats.MinFirstAlbumYear {
+				stats.MinFirstAlbumYear = year
+			}
+			if year > stats.MaxFirstAlbumYear {
+				stats.MaxFirstAlbumYear = year
+			}
+		}
+		memberCountMap[len(artist.Members)] = true
+	}
+
+	for count := range memberCountMap {
+		stats.MemberCounts = append(stats.MemberCounts, count)
+	}
+	sort.Ints(stats.MemberCounts)
+
+	return stats
+}
+
+// getAllLocations extracts all unique, formatted locations from the locations data
+func getAllLocations(locations []models.Locations) []string {
+	return services.ParseLocations(locations)
 }
