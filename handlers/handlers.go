@@ -257,8 +257,8 @@ func parseFilterParams(r *http.Request) models.FilterParameters {
 		MinMembers:        parseInt("min_members", 0),
 		MaxMembers:        parseInt("max_members", 100),
 		SelectedLocations: func() []string {
-			if locs := params.Get("locations"); locs != "" {
-				return strings.Split(locs, ",")
+			if locs, exists := params["locations"]; exists && len(locs) > 0 {
+				return locs
 			}
 			return nil
 		}(),
