@@ -103,6 +103,7 @@ header {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border-bottom: 1px solid #97CE4C;
+    width: 100%;
 }
 
 
@@ -163,6 +164,7 @@ footer {
     -webkit-backdrop-filter: blur(8px);
     color: #97CE4C;
     border-top: 1px solid #97CE4C;
+    width: 100%;
 }
 
 footer p {
@@ -287,27 +289,27 @@ footer p {
     transition: all 0.3s ease;
 }
 
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    flex: 1;
+}
+
 /* ========================================
    SEARCH BAR 
    ======================================== */
 
 .search-container {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    margin-bottom: 2rem;
-}
-
-/* FORM */
-.search-form {
-    width: 100%;
     display: flex;
-    align-items: center;
-
+    width: 50%;
+    max-width: 900px;
+    margin-bottom: 2rem;
     padding: 4px;
     border-radius: 12px;
 
-    background: rgba(60, 62, 68, 0.65);
+    background: rgba(20, 27, 35, 0.85);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
 
@@ -318,8 +320,15 @@ footer p {
         box-shadow 0.25s ease;
 }
 
+/* FORM */
+.search-form {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
 /* FORM FOCUS (WHEN INPUT IS FOCUSED) */
-.search-form:focus-within {
+.search-container:focus-within {
     border-color: #97CE4C;
     box-shadow:
         0 0 0 2px rgba(151, 206, 76, 0.2),
@@ -337,8 +346,6 @@ footer p {
     color: #e0e0e0;
     padding: 10px 12px;
     border-radius: 8px;
-    background: rgba(20, 27, 35, 0.85); 
-    border: 1px solid rgba(151, 206, 76, 0.4);
     outline: none;
 }
 
@@ -348,11 +355,12 @@ footer p {
 }
 
 /* CATEGORY SELECTOR */
-.search-category {
+.search-form select {
     margin-left: 8px;
+    max-width: 60px;
     padding: 8px 10px;
     border-radius: 8px;
-    border: 1px solid #97CE4C;
+    border: 1px solid transparent;
     background-color: rgba(20, 27, 35, 0.8);
     color: #e0e0e0;
     font-size: var(--fs-body);
@@ -361,16 +369,17 @@ footer p {
 }
 
 /* SEARCH BUTTON */
-.search-form button {
+.search-container .search-form button {
     margin-left: 6px;
     padding: 8px 14px;
     border-radius: 8px;
-    border: 1px solid #97CE4C;
+    border: 1px solid transparent;
     background-color: rgba(20, 27, 35, 0.8);
     color: #97CE4C;
     cursor: pointer;
     transition: all 0.3s ease;
 }
+
 .search-form button:hover {
     background-color: #97CE4C;
     color: #20232A;
@@ -462,7 +471,7 @@ footer p {
 /* MOBILE TWEAKS */
 @media (max-width: 575.98px) {
     .search-container {
-        max-width: 100%;
+        width: 75%;
     }
 
     .search-form input[type="search"] {
@@ -473,6 +482,17 @@ footer p {
     .search-results a, .search-suggestions a {
         padding: 5px 1px;
     }
+
+    .search-container .search-form button {
+        display: none;
+    }
+
+    .sidebar.visible {
+        width: 75%;
+        max-width: none;
+        min-width: none;
+    }
+
 }
 
 /* ========================================
@@ -841,29 +861,51 @@ margin-bottom: 0;
     transform: translateY(-5px) scale(1.1);
 }
 
-/* MOBILE LEGEND ADJUSTMENTS */
-@media (max-width: 575.98px) {
+/* ========================================
+   FILTERS
+   ======================================== */
+.filters-container {
+    height: 100vh;
+    margin-top: 50px;
+    width: 30%;
+    max-width: 400px;
+    min-width: 250px;
+    padding: 20px;
+}
 
-    .info.legend {
-        padding: 6px 8px;
-        margin-right: 5px;
-        margin-bottom: 25px;
-        max-width: 120px;
-    }
+.toggle-filters-button {
+    display: block;
+    width: auto;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background-color: rgba(20, 27, 35, 0.8);
+    color: #97CE4C;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
 
-    .info.legend h4 {
-        font-size: 0.8rem;
-        margin-bottom: 4px;
-    }
+.toggle-filters-button:hover {
+    background-color: #97CE4C;
+    color: #20232A;
+    box-shadow: 0 0 10px #97CE4C, 0 0 20px #97CE4C;
+}
 
-    .legend-item {
-        font-size: 0.7rem;
-        margin-bottom: 2px;
-    }
+.sidebar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 30%;
+    max-width: 400px;
+    min-width: 250px;
+    background-color: rgba(20, 27, 35, 0.85);
+    backdrop-filter: blur(8px);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
 
-    .legend-item i {
-        width: 16px;
-        height: 3px;           
-        margin-right: 5px;      
-    }
+.sidebar.visible {
+    display: block;
 }
