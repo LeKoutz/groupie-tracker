@@ -4,9 +4,10 @@ A web application that displays information about your favorite artists and band
 
 ## Features
 
-- View artist and band information
-- Display concert locations and dates
-- Show band members and formation dates
+- **Asynchronous API Integration**: Non-blocking data fetching from multiple endpoints with graceful handling of incomplete data
+- **Progressive Loading**: Server starts immediately; redirects to loading page while data is being fetched
+- **Progressive Enhancement**: Search-bar functionality works with vanilla form submission, enhanced with JavaScript for dynamic suggestions
+- **Zero external dependencies**: Pure Go backend with only standard packages
 
 ## Visual Enhancements
    * Smooth Scrolling: Fluid page navigation for a more polished feel.
@@ -16,15 +17,17 @@ A web application that displays information about your favorite artists and band
 ## Tech Stack
 
 - **Backend**: Go
-- **Frontend**: HTML/CSS
+- **Frontend**:
+    - HTML/CSS
+    - Javascript
 - **Deployment**: Railway
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://platform.zone01.gr/git/gkoutzos/groupie-tracker.git
-cd groupie-tracker
+git clone https://platform.zone01.gr/git/gkoutzos/groupie-tracker-search-bar.git
+cd groupie-tracker-search-bar
 ```
 
 2. Run the application:
@@ -45,5 +48,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contributors
 
 - [gkoutzos](https://platform.zone01.gr/git/gkoutzos)
-- [ttsopani](https://platform.zone01.gr/git/ttsopani)
 - [cktistak](https://platform.zone01.gr/git/cktistak)

@@ -191,3 +191,13 @@ func sortLocationsByDate(relations *models.Relations) {
 	})
 	relations.SortedLocations = locations
 }
+
+// ArtistExistsInList checks if an artist is already in the provided list.
+func ArtistExistsInList(artists []models.Artists, artist *models.Artists) bool {
+	for _, a := range artists {
+		if a.ID == artist.ID {
+			return true
+		}
+	}
+	return false
+}

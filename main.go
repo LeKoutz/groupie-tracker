@@ -29,6 +29,7 @@ func main () {
 	mux.HandleFunc("/artist/", handlers.ArtistDetailsHandler)
 	mux.HandleFunc("/loading/", handlers.LoadingHandler)
 	mux.HandleFunc("/static/", handlers.ResourcesHandler)
+	mux.HandleFunc("/api/search", handlers.SearchHandler)
 
 	// Start the server
 	port := os.Getenv("PORT")
