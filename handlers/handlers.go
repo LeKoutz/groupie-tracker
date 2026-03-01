@@ -117,11 +117,13 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		HandleErrors(w, http.StatusNotFound, http.StatusText(http.StatusNotFound), err.Error())
 		return
 	}
+	mapData := services.Geocode(relations.SortedLocations)
 	data := models.ArtistDetails{
 		Artist:    *artist,
 		Locations: *locations,
 		Dates:     *dates,
 		Relations: *relations,
+		MapData:   mapData,
 	}
 	if err := artist_tmpl.Execute(w, data); err != nil {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to complete your request. Please try again later")
