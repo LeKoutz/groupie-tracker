@@ -20,6 +20,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const noResultsBox = document.querySelector(".no-results");
     const artistGrid = document.getElementById("artist-list");
 
+    const toggleFiltersButton = document.getElementById("toggle-filters");
+    const sidebar = document.querySelector(".sidebar");
+
+    document.getElementById("toggle-filters").addEventListener("click", () => {
+        sidebar.classList.toggle("visible");
+    });
+    document.addEventListener("click", (e) => {
+        if (!sidebar.contains(e.target) && e.target !== toggleFiltersButton) {
+            sidebar.classList.remove("visible");
+        }
+    });
+
     // State
     let debounceTimer;
 
