@@ -308,6 +308,7 @@ footer p {
     margin-bottom: 2rem;
     padding: 4px;
     border-radius: 12px;
+    z-index: 1000;
 
     background: rgba(20, 27, 35, 0.85);
     backdrop-filter: blur(6px);
