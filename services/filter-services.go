@@ -16,7 +16,7 @@ func FilterArtists(artists []models.Artists, locations []models.Locations, f mod
 	for _, a := range artists {
 		// Single-pass filtering with continue statements
 		if !inRange(a.CreationDate, f.MinCreationDate, f.MaxCreationDate) ||
-			!inRange(extractYear(a.FirstAlbum), f.MinFirstAlbumYear, f.MaxFirstAlbumYear) ||
+			!inRange(ExtractYearFromDate(a.FirstAlbum), f.MinFirstAlbumYear, f.MaxFirstAlbumYear) ||
 			!inRange(len(a.Members), f.MinMembers, f.MaxMembers) ||
 			(len(f.SelectedLocations) > 0 && !hasLocation(locMap[a.ID], f.SelectedLocations)) {
 			continue
@@ -26,8 +26,8 @@ func FilterArtists(artists []models.Artists, locations []models.Locations, f mod
 	return filtered
 }
 
-// extractYear extracts the year from a date string
-func extractYear(dateStr string) int {
+// ExtractYearFromDate extracts the year from a date string
+func ExtractYearFromDate(dateStr string) int {
 	if t, err := parseDate(dateStr); err == nil {
 		return t.Year()
 	}
