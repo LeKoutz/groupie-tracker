@@ -54,15 +54,28 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }, 300);
   };
-  const renderCard = (a) => `
+  const renderCard = (a) => {
+    const members = a.members?.length === 1 ? "Solo" : a.members?.length || 0;
+    return `
         <div class="artist-card">
-            <a href="/artist/${a.id}">
-                <img src="${a.image}" alt="${a.name}">
-                <h3>${a.name}</h3>
-                <p>Members: ${a.members?.length || 0}</p>
-                <p>Start: ${a.creationDate}</p>
+            <a href="/artist/${a.id}" class="artist-tag">
+                <div class="card-image">
+                    <img src="${a.image}" alt="${a.name}">
+                </div>
+                <div class="card-content">
+                    <section class="band-info">
+                        <h3>${a.name}</h3>
+                    </section>
+                    <section class="card-info">
+                        <p><strong>Members:</strong> ${members}</p>
+                        <p><strong>Start Year:</strong> ${a.creationDate}</p>
+                        <p><strong>First Release:</strong> ${a.firstAlbum}</p>
+                        <a href="/artist/${a.id}" class="green-button">More Info →</a>
+                    </section>
+                </div>
             </a>
         </div>`;
+  };
   [
     inputs.minCD,
     inputs.maxCD,
