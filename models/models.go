@@ -53,18 +53,21 @@ type ArtistDetails struct {
 type Coordinates struct {
 	Lat string `json:"lat"`
 	Lon string `json:"lon"`
-	Artist		Artists
-	Locations	Locations
-	Dates		Dates
-	Relations	Relations
 }
 
 type FilterParameters struct {
-	MinCreationDate int
-	MaxCreationDate int
-	MinMembers int
-	MaxMembers int
+	MinCreationDate   int
+	MaxCreationDate   int
+	MinMembers        int
+	MaxMembers        int
 	MinFirstAlbumYear int
 	MaxFirstAlbumYear int
 	SelectedLocations []string
+}
+type FilterStats struct {
+	MinCreationDate   int
+	MaxCreationDate   int
+	MinFirstAlbumYear int
+	MaxFirstAlbumYear int
+	MemberCounts      []int
 }
