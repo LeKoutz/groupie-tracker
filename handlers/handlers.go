@@ -3,16 +3,18 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"groupie-tracker/api"
-	"groupie-tracker/models"
-	"groupie-tracker/services"
-	"groupie-tracker/search"
 	"html/template"
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
+
+	"groupie-tracker/api"
+	"groupie-tracker/models"
+	"groupie-tracker/search"
+	"groupie-tracker/services"
 )
 
 // Parse templates once before server startup
@@ -52,12 +54,16 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		Artists       []models.Artists
 		SearchQuery   string
 		SearchResults []search.SearchResult
-		NoResults	  bool
+		NoResults     bool
+		Stats         models.FilterStats
+		Locations     []string
 	}{
 		Artists:       api.All_Artists,
 		SearchQuery:   query,
 		SearchResults: SearchResults,
 		NoResults:     false,
+		Stats:         calculateFilterStats(api.All_Artists),
+		Locations:     getAllLocations(api.All_Locations),
 	}
 	// If query exists and SearchResults != empty, show search results only
 	if query != "" && len(SearchResults) > 0 {
@@ -89,7 +95,7 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if api.GetLoadingStatus().IsLoading {
-		http.Redirect(w, r, "/loading?requested="+ url.QueryEscape(r.URL.Path), http.StatusSeeOther)
+		http.Redirect(w, r, "/loading?requested="+url.QueryEscape(r.URL.Path), http.StatusSeeOther)
 		return
 	} else if api.GetLoadingStatus().HasFailed {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to load the data. Please try again later.")
@@ -155,10 +161,8 @@ func HandleErrors(w http.ResponseWriter, statusCode int, message, response strin
 		Message:    http.StatusText(statusCode),
 		Response:   response,
 	}
-	w.WriteHeader(statusCode)
 	if err := error_tmpl.Execute(w, errorData); err != nil {
 		http.Error(w, fmt.Sprintf("Error %d: %s %s", statusCode, message, response), statusCode)
-		return
 	}
 }
 
@@ -189,24 +193,127 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// SearchHandler returns search results in JSON format based on the query parameter.
-// It is used for Javascript-based search autocomplete functionality.
-func SearchHandler(w http.ResponseWriter, r *http.Request) {
+func parseFilterParams(r *http.Request) models.FilterParameters {
+	params := r.URL.Query()
+
+	// Helper to parse int with default
+	parseInt := func(key string, defaultValue int) int {
+		if val := params.Get(key); val != "" {
+			if i, err := strconv.Atoi(val); err == nil {
+				return i
+			}
+		}
+		return defaultValue
+	}
+
+	// Set sensible defaults for "Max" values to ensure we include everything if not specified.
+
+	return models.FilterParameters{
+		MinCreationDate:   parseInt("min_creation_date", 0),
+		MaxCreationDate:   parseInt("max_creation_date", 3000),
+		MinFirstAlbumYear: parseInt("min_first_album_year", 0),
+		MaxFirstAlbumYear: parseInt("max_first_album_year", 3000),
+		MinMembers:        parseInt("min_members", 0),
+		MaxMembers:        parseInt("max_members", 100),
+		SelectedLocations: func() []string {
+			if locs, exists := params["locations"]; exists && len(locs) > 0 {
+				return locs
+			}
+			return nil
+		}(),
+	}
+}
+
+// calculateFilterStats extracts min/max values and unique member counts from artists
+func calculateFilterStats(artists []models.Artists) models.FilterStats {
+	stats := models.FilterStats{
+		MinCreationDate:   9999,
+		MaxCreationDate:   0,
+		MinFirstAlbumYear: 9999,
+		MaxFirstAlbumYear: 0,
+	}
+
+	memberCountMap := make(map[int]bool)
+
+	for _, artist := range artists {
+		if artist.CreationDate < stats.MinCreationDate {
+			stats.MinCreationDate = artist.CreationDate
+		}
+		if artist.CreationDate > stats.MaxCreationDate {
+			stats.MaxCreationDate = artist.CreationDate
+		}
+		// Extract year using the services function
+		year := services.ExtractYearFromDate(artist.FirstAlbum)
+		if year > 0 {
+			if year < stats.MinFirstAlbumYear {
+				stats.MinFirstAlbumYear = year
+			}
+			if year > stats.MaxFirstAlbumYear {
+				stats.MaxFirstAlbumYear = year
+			}
+		}
+		memberCountMap[len(artist.Members)] = true
+	}
+
+	for count := range memberCountMap {
+		stats.MemberCounts = append(stats.MemberCounts, count)
+	}
+	sort.Ints(stats.MemberCounts)
+
+	return stats
+}
+
+// getAllLocations extracts all unique, formatted locations from the locations data
+func getAllLocations(locations []models.Locations) []string {
+	return services.ParseLocations(locations)
+}
+
+// Unified filter logic - returns different types based on endpoint
+func handleFilter(w http.ResponseWriter, r *http.Request, returnFullObjects bool) {
 	if r.Method != http.MethodGet {
-		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "This request method is not supported for the requested resource. Use GET request instead.")
+		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "GET required")
 		return
 	}
+	filters := parseFilterParams(r)
 	query := r.URL.Query().Get("search")
-	if query == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("[]"))
-		return
-	}
-	SearchResults := search.Search(query, api.All_Artists, services.GetRelationsByID)
-	category := r.URL.Query().Get("category")
-	if category != "" && category != "all" {
-		SearchResults = search.FilterSearch(SearchResults, category)
+	// Base filtered list
+	filteredArtists := services.FilterArtists(api.All_Artists, api.All_Locations, filters)
+	// Apply search query if present
+	if query != "" {
+		results := search.Search(query, filteredArtists, services.GetRelationsByID)
+		if category := r.URL.Query().Get("category"); category != "" && category != "all" {
+			results = search.FilterSearch(results, category)
+		}
+		if returnFullObjects {
+			// FilterHandler: convert IDs back to full objects
+			matched := make(map[int]bool)
+			for _, r := range results {
+				matched[r.ID] = true
+			}
+			var matchedArtists []models.Artists
+			for _, a := range filteredArtists {
+				if matched[a.ID] {
+					matchedArtists = append(matchedArtists, a)
+				}
+			}
+			filteredArtists = matchedArtists
+		} else {
+			// SearchHandler: return lightweight results
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(results)
+			return
+		}
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(SearchResults)
+	json.NewEncoder(w).Encode(filteredArtists)
+}
+
+// SearchHandler - for autocomplete
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
+	handleFilter(w, r, false)
+}
+
+// FilterHandler - for main grid
+func FilterHandler(w http.ResponseWriter, r *http.Request) {
+	handleFilter(w, r, true)
 }
