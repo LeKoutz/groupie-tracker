@@ -3,10 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"groupie-tracker/api"
-	"groupie-tracker/models"
-	"groupie-tracker/services"
-	"groupie-tracker/search"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -14,6 +10,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"groupie-tracker/api"
+	"groupie-tracker/models"
+	"groupie-tracker/search"
+	"groupie-tracker/services"
 )
 
 // Parse templates once before server startup
@@ -94,7 +95,7 @@ func ArtistDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if api.GetLoadingStatus().IsLoading {
-		http.Redirect(w, r, "/loading?requested="+ url.QueryEscape(r.URL.Path), http.StatusSeeOther)
+		http.Redirect(w, r, "/loading?requested="+url.QueryEscape(r.URL.Path), http.StatusSeeOther)
 		return
 	} else if api.GetLoadingStatus().HasFailed {
 		HandleErrors(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), "The server was unable to load the data. Please try again later.")
@@ -192,48 +193,6 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// SearchHandler returns search results in JSON format based on the query parameter.
-// It is used for Javascript-based search autocomplete functionality.
-func SearchHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "This request method is not supported for the requested resource. Use GET request instead.")
-		return
-	}
-
-	// Parse filter parameters
-	filters := parseFilterParams(r)
-
-	query := r.URL.Query().Get("search")
-
-	// We will fetch the filtered list of artists first
-	filteredArtists := services.FilterArtists(api.All_Artists, api.All_Locations, filters)
-
-	var SearchResults []search.SearchResult
-
-	if query != "" {
-		// If there is a text query, search within the filtered artists
-		SearchResults = search.Search(query, filteredArtists, services.GetRelationsByID)
-
-		category := r.URL.Query().Get("category")
-		if category != "" && category != "all" {
-			SearchResults = search.FilterSearch(SearchResults, category)
-		}
-	} else {
-		// Converting models.Artists to search.SearchResult
-		for _, artist := range filteredArtists {
-			SearchResults = append(SearchResults, search.SearchResult{
-				Label:    artist.Name,
-				ID:       artist.ID,
-				Category: "artist",
-				Method:   search.MethodContains,
-			})
-		}
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(SearchResults)
-}
-
 func parseFilterParams(r *http.Request) models.FilterParameters {
 	params := r.URL.Query()
 
@@ -307,4 +266,54 @@ func calculateFilterStats(artists []models.Artists) models.FilterStats {
 // getAllLocations extracts all unique, formatted locations from the locations data
 func getAllLocations(locations []models.Locations) []string {
 	return services.ParseLocations(locations)
+}
+
+// Unified filter logic - returns different types based on endpoint
+func handleFilter(w http.ResponseWriter, r *http.Request, returnFullObjects bool) {
+	if r.Method != http.MethodGet {
+		HandleErrors(w, http.StatusMethodNotAllowed, http.StatusText(http.StatusMethodNotAllowed), "GET required")
+		return
+	}
+	filters := parseFilterParams(r)
+	query := r.URL.Query().Get("search")
+	// Base filtered list
+	filteredArtists := services.FilterArtists(api.All_Artists, api.All_Locations, filters)
+	// Apply search query if present
+	if query != "" {
+		results := search.Search(query, filteredArtists, services.GetRelationsByID)
+		if category := r.URL.Query().Get("category"); category != "" && category != "all" {
+			results = search.FilterSearch(results, category)
+		}
+		if returnFullObjects {
+			// FilterHandler: convert IDs back to full objects
+			matched := make(map[int]bool)
+			for _, r := range results {
+				matched[r.ID] = true
+			}
+			var matchedArtists []models.Artists
+			for _, a := range filteredArtists {
+				if matched[a.ID] {
+					matchedArtists = append(matchedArtists, a)
+				}
+			}
+			filteredArtists = matchedArtists
+		} else {
+			// SearchHandler: return lightweight results
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(results)
+			return
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(filteredArtists)
+}
+
+// SearchHandler - for autocomplete
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
+	handleFilter(w, r, false)
+}
+
+// FilterHandler - for main grid
+func FilterHandler(w http.ResponseWriter, r *http.Request) {
+	handleFilter(w, r, true)
 }
