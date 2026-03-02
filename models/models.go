@@ -54,20 +54,3 @@ type Coordinates struct {
 	Lat string `json:"lat"`
 	Lon string `json:"lon"`
 }
-
-type FilterParameters struct {
-	MinCreationDate   int
-	MaxCreationDate   int
-	MinMembers        int
-	MaxMembers        int
-	MinFirstAlbumYear int
-	MaxFirstAlbumYear int
-	SelectedLocations []string
-}
-type FilterStats struct {
-	MinCreationDate   int
-	MaxCreationDate   int
-	MinFirstAlbumYear int
-	MaxFirstAlbumYear int
-	MemberCounts      []int
-}
