@@ -5,10 +5,17 @@ A web application that displays information about your favorite artists and band
 ## Features
 
 - **Asynchronous API Integration**: Non-blocking data fetching from multiple endpoints with graceful handling of incomplete data
+- **Advanced Filtering System**:
+    - Real-time dual range sliders for Creation Date and First Album Year with synchronized numeric inputs
+    - Member count filtering with checkbox selection
+    - Location-based filtering with autocomplete
+    - Instant grid updates as filters are adjusted
+    - Reset functionality to quickly clear all filters
+    - Mobile-optimized filter sidebar with toggle button
 - **Geolocalization & Mapping**: 
-    - Integration with OpenStreetMap (Nominatim API) to convert tour locations into geographic coordinates.
-    - Intelligent caching system with persistence (`locations.json`) to minimize API hits.
-    - Asynchronous background geocoding to pre-populate location data.
+    - Integration with OpenStreetMap (Nominatim API) to convert tour locations into geographic coordinates
+    - Intelligent caching system with persistence (`locations.json`) to minimize API hits
+    - Asynchronous background geocoding to pre-populate location data
 - **Progressive Loading**: Server starts immediately; redirects to loading page while data is being fetched
 - **Progressive Enhancement**: Search-bar functionality works with vanilla form submission, enhanced with JavaScript for dynamic suggestions
 - **Zero external dependencies**: Pure Go backend with only standard packages
@@ -19,6 +26,7 @@ A web application that displays information about your favorite artists and band
    * Smooth Scrolling: Fluid page navigation for a more polished feel.
    * Interactive UI: Bouncy "spring" hover effects on images and card highlights for better feedback.
    * Mobile-Ready: Optimized responsive layouts for error pages and artist grids.
+   * Accessible Keyboard Navigation: ESC to close sidebar/suggestions, arrow keys to navigate search results
 
 ## Tech Stack
 
@@ -32,8 +40,8 @@ A web application that displays information about your favorite artists and band
 
 1. Clone the repository:
 ```bash
-git clone https://platform.zone01.gr/git/gkoutzos/groupie-tracker-geolocalization.git
-cd groupie-tracker-geolocalization
+git clone https://platform.zone01.gr/git/gkoutzos/groupie-tracker-filters.git
+cd groupie-tracker-filters
 ```
 
 2. Run the application:
