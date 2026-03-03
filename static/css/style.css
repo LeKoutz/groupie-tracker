@@ -455,6 +455,12 @@ footer p {
     transition: background 0.2s ease, color 0.2s ease;
 }
 
+.search-suggestions li.highlight {
+    color: #b7ff7e;
+    text-shadow: 0 0 8px #97CE4C;
+}
+
+
 /* SCROLLBAR (WEBKIT) */
 .search-results::-webkit-scrollbar, .search-suggestions::-webkit-scrollbar {
     width: 8px;
