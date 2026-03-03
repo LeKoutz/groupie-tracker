@@ -62,23 +62,55 @@
                 <!-- Filters Section -->
                 <div class="filters-container">
                     <h3>Filters</h3>
+                    <!-- Creation Date -->
                     <div class="filter-group">
-                        <label>Creation Date: <span id="creation-date-val"></span></label>
+                        <label>Creation Date: <span id="creation-date-val">{{.Stats.MinCreationDate}} - {{.Stats.MaxCreationDate}}</span></label>
+                        
+                        <div class="range-values">
+                            <input type="number" id="min-creation-input" 
+                                   min="{{.Stats.MinCreationDate}}" 
+                                   max="{{.Stats.MaxCreationDate}}"
+                                   value="{{.Stats.MinCreationDate}}">
+                            <span>-</span>
+                            <input type="number" id="max-creation-input" 
+                                   min="{{.Stats.MinCreationDate}}" 
+                                   max="{{.Stats.MaxCreationDate}}"
+                                   value="{{.Stats.MaxCreationDate}}">
+                        </div>
                         <div class="range-slider">
-                            <input type="range" id="min-creation-date" min="{{.Stats.MinCreationDate}}"
-                                max="{{.Stats.MaxCreationDate}}" value="{{.Stats.MinCreationDate}}">
-                            <input type="range" id="max-creation-date" min="{{.Stats.MinCreationDate}}"
-                                max="{{.Stats.MaxCreationDate}}" value="{{.Stats.MaxCreationDate}}">
+                            <input type="range" id="min-creation-date"
+                                min="{{.Stats.MinCreationDate}}"
+                                max="{{.Stats.MaxCreationDate}}"
+                                value="{{.Stats.MinCreationDate}}">
+                            <input type="range" id="max-creation-date"
+                                min="{{.Stats.MinCreationDate}}"
+                                max="{{.Stats.MaxCreationDate}}"
+                                value="{{.Stats.MaxCreationDate}}">
                         </div>
                     </div>
-
+                    <!-- First Album Year -->
                     <div class="filter-group">
-                        <label>First Album Year: <span id="first-album-val"></span></label>
+                        <label>First Album Year: <span id="first-album-val">{{.Stats.MinFirstAlbumYear}} - {{.Stats.MaxFirstAlbumYear}}</span></label>
+                        <div class="range-values">
+                            <input type="number" id="min-album-input" 
+                                   min="{{.Stats.MinFirstAlbumYear}}" 
+                                   max="{{.Stats.MaxFirstAlbumYear}}"
+                                   value="{{.Stats.MinFirstAlbumYear}}">
+                            <span>-</span>
+                            <input type="number" id="max-album-input" 
+                                   min="{{.Stats.MinFirstAlbumYear}}" 
+                                   max="{{.Stats.MaxFirstAlbumYear}}"
+                                   value="{{.Stats.MaxFirstAlbumYear}}">
+                        </div>
                         <div class="range-slider">
-                            <input type="range" id="min-first-album" min="{{.Stats.MinFirstAlbumYear}}"
-                                max="{{.Stats.MaxFirstAlbumYear}}" value="{{.Stats.MinFirstAlbumYear}}">
-                            <input type="range" id="max-first-album" min="{{.Stats.MinFirstAlbumYear}}"
-                                max="{{.Stats.MaxFirstAlbumYear}}" value="{{.Stats.MaxFirstAlbumYear}}">
+                            <input type="range" id="min-album-year"
+                                min="{{.Stats.MinFirstAlbumYear}}"
+                                max="{{.Stats.MaxFirstAlbumYear}}"
+                                value="{{.Stats.MinFirstAlbumYear}}">
+                            <input type="range" id="max-album-year"
+                                min="{{.Stats.MinFirstAlbumYear}}"
+                                max="{{.Stats.MaxFirstAlbumYear}}"
+                                value="{{.Stats.MaxFirstAlbumYear}}">
                         </div>
                     </div>
 
