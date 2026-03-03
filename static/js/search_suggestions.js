@@ -68,6 +68,14 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = link.href;
     }
   });
+  // Clear input with ESC
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      input.value = "";
+      resultsBox.innerHTML = "";
+      resultsBox.style.display = "none";
+    }
+  });
   // close dropdown when clicking outside
   document.addEventListener("click", (e) => {
     if (!form.contains(e.target) && !resultsBox.contains(e.target)) {
