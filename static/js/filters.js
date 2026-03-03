@@ -19,10 +19,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const grid = document.getElementById("artist-list");
 
   let debounce;
+  const toggleFiltersButton = document.getElementById("toggle-filters");
   const sidebar = document.querySelector(".sidebar");
   document.getElementById("toggle-filters").addEventListener("click", () => {
     sidebar.classList.toggle("visible");
   });
+  document.addEventListener("click", (e) => {
+        if (!sidebar.contains(e.target) && e.target !== toggleFiltersButton) {
+            sidebar.classList.remove("visible");
+        }
+    });
   const buildParams = () => {
     const params = new URLSearchParams();
     params.set("min_creation_date", inputs.minCD.value);
