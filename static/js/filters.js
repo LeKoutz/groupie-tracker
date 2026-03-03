@@ -141,10 +141,10 @@ document.addEventListener("DOMContentLoaded", () => {
   setupSlider(minFASlider, maxFASlider, minFAInput, true);
   setupSlider(maxFASlider, minFASlider, maxFAInput, false);
   // Number input events
-  if (minCDInput) minCDInput.addEventListener("input", () => { syncInputToSlider(minCDInput, minCDSlider, maxCDSlider, true); fetchResults(); });
-  if (maxCDInput) maxCDInput.addEventListener("input", () => { syncInputToSlider(maxCDInput, maxCDSlider, minCDSlider, false); fetchResults(); });
-  if (minFAInput) minFAInput.addEventListener("input", () => { syncInputToSlider(minFAInput, minFASlider, maxFASlider, true); fetchResults(); });
-  if (maxFAInput) maxFAInput.addEventListener("input", () => { syncInputToSlider(maxFAInput, maxFASlider, minFASlider, false); fetchResults(); });
+  if (minCDInput) minCDInput.addEventListener("change", () => { syncInputToSlider(minCDInput, minCDSlider, maxCDSlider, true); fetchResults(); });
+  if (maxCDInput) maxCDInput.addEventListener("change", () => { syncInputToSlider(maxCDInput, maxCDSlider, minCDSlider, false); fetchResults(); });
+  if (minFAInput) minFAInput.addEventListener("change", () => { syncInputToSlider(minFAInput, minFASlider, maxFASlider, true); fetchResults(); });
+  if (maxFAInput) maxFAInput.addEventListener("change", () => { syncInputToSlider(maxFAInput, maxFASlider, minFASlider, false); fetchResults(); });
   // Other filters
   if (location) location.addEventListener("input", fetchResults);
   members.forEach(cb => cb.addEventListener("change", fetchResults));
