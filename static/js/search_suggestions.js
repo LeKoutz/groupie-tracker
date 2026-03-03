@@ -53,12 +53,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (index < items.length - 1) {
         if (index >= 0) items[index].classList.remove("highlight");
         items[++index].classList.add("highlight");
+        items[index].scrollIntoView({ block: "nearest" });
       }
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (index > 0) {
         items[index].classList.remove("highlight");
         items[--index].classList.add("highlight");
+        items[index].scrollIntoView({ block: "nearest" });
       }
     } else if (e.key === "Enter" && index >= 0) {
       e.preventDefault();
