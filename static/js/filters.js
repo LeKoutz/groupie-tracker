@@ -30,6 +30,12 @@ document.addEventListener("DOMContentLoaded", () => {
         sidebar.classList.remove("visible");
       }
     });
+  // Close sidebar on Escape key press
+  document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && sidebar.classList.contains("visible")) {
+            sidebar.classList.remove("visible");
+        }
+    });
   }
   // Helper functions
   const updateDisplayValues = () => {
