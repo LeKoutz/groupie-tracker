@@ -258,6 +258,7 @@ func RefreshData() {
 	GetLoadingStatus()
 	for {
 		if GetLoadingStatus().IsLoading {
+			time.Sleep(1 * time.Second)
 			continue
 		} else if GetLoadingStatus().IsLoaded {
 			time.Sleep(24 * time.Hour)

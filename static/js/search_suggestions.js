@@ -42,6 +42,40 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   input.addEventListener("input", fetchResults);
   categorySelect.addEventListener("change", fetchResults);
+  // Navigate with arrow keys
+  input.addEventListener("keydown", (e) => {
+    const items = resultsBox.querySelectorAll("li");
+    if (items.length === 0) return;
+
+    let index = Array.from(items).findIndex(item => item.classList.contains("highlight"));
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (index < items.length - 1) {
+        if (index >= 0) items[index].classList.remove("highlight");
+        items[++index].classList.add("highlight");
+        items[index].scrollIntoView({ block: "nearest" });
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (index > 0) {
+        items[index].classList.remove("highlight");
+        items[--index].classList.add("highlight");
+        items[index].scrollIntoView({ block: "nearest" });
+      }
+    } else if (e.key === "Enter" && index >= 0) {
+      e.preventDefault();
+      const link = items[index].querySelector("a");
+      window.location.href = link.href;
+    }
+  });
+  // Clear input with ESC
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      input.value = "";
+      resultsBox.innerHTML = "";
+      resultsBox.style.display = "none";
+    }
+  });
   // close dropdown when clicking outside
   document.addEventListener("click", (e) => {
     if (!form.contains(e.target) && !resultsBox.contains(e.target)) {

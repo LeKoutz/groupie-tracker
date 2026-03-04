@@ -1,109 +1,196 @@
-<!DOCTYPE html> 
-<html lang="en"> 
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8"> 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>Groupie Tracker: Home</title> 
-    <link rel="stylesheet" href="/static/css/style.css"> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groupie Tracker: Home</title>
+    <link rel="stylesheet" href="/static/css/style.css">
     <script>
-  document.documentElement.classList.add("js-enabled");
-</script>
+        document.documentElement.classList.add("js-enabled");
+    </script>
 </head>
 <body>
 
-<header>
-    <nav>
+    <header>
+        <nav>
         <a href="/"><h1>GROUPIE TRACKER</h1></a>
-    </nav>
-</header>
+        </nav>
+    </header>
 
-<main class="artist-main">
-    <div class="search-container">
-        <form action="/" method="GET" class="search-form">
+    <main class="artist-main">
+        <!-- Search Bar Section -->
+        <div class="search-container">
+            <button id="toggle-filters"class="toggle-filters-button">☰</button>
+            <form action="/" method="GET" class="search-form">
             <input
                 type="text"
                 name="search"
                 placeholder="Search..."
                 value="{{.SearchQuery}}"
-                autocomplete="off"
-            >
-            <select name="category" class="search-category">
-                <option value="all">All</option>
-                <option value="artist">Artist/Band</option>
-                <option value="member">Member</option>
-                <option value="first_album">First Album</option>
-                <option value="creation_date">Creation Date</option>
-                <option value="concert">Concert</option>
-            </select>
-            <button type="submit">Search</button>
-        </form>
-        <div class="search-suggestions" style="display: none;"></div>
-        {{if .NoResults}}
-        <div class="search-results">
-            <p class="no-results">No results found</p>
-        </div>
-        {{end}}
-        {{if .SearchResults}}
-        <div class="search-results">
-            <ul>
-                {{range .SearchResults}}
+                autocomplete="off">
+                <select name="category" class="search-category">
+                    <option value="all">All</option>
+                    <option value="artist">Artist/Band</option>
+                    <option value="member">Member</option>
+                    <option value="first_album">First Album</option>
+                    <option value="creation_date">Creation Date</option>
+                    <option value="concert">Concert</option>
+                </select>
+                <button type="submit">🔍︎</button>
+            </form>
+            <div class="search-suggestions" style="display: none;"></div>
+            {{if .NoResults}}
+            <div class="search-results">
+                <p class="no-results">No results found</p>
+            </div>
+            {{end}}
+            {{if .SearchResults}}
+            <div class="search-results">
+                <ul>
+                    {{range .SearchResults}}
                     <li>
                         <a href="/artist/{{.ID}}">{{.Label}}</a>
-                </li>
-                {{end}}
-            </ul>
-        </div>
-        {{end}}
-    </div>
-    <div id="artist-list" class="artist-grid">
-        {{range .Artists}}
-            <div href="/artist/{{.ID}}" class="artist-card">
-                <a href="/artist/{{.ID}}" class="artist-tag">
-                <div class="card-image">
-                    <img src="{{.Image}}" alt="{{.Name}}">
-                </div>
-
-                <div class="card-content">
-                    <section class="band-info">
-                        <h3>{{.Name}}</h3>
-                    </section>
-
-                    <section class="card-info">
-                        <p><strong>Members:</strong>
-                        {{ if eq (len .Members) 1 }}
-                            Solo
-                        {{ else }}
-                            {{ len .Members }}
-                        {{ end }}
-                        </p>
-                        <p><strong>Start Year:</strong> {{.CreationDate}}</p>
-                        <p><strong>First Release:</strong> {{.FirstAlbum}}</p>
-                        <a href="/artist/{{.ID}}" class="green-button">More Info →</a>
-                    </section>
-                </div>
-                </a>
+                    </li>
+                    {{end}}
+                </ul>
             </div>
-        {{end}}
-    </div>
-</main>
-<script src="/static/js/search_suggestions.js"></script>
+            {{end}}
+        </div>
 
-<footer>
-    <p>&copy; 2026 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
-</footer>
+        <div class="main-content">
+            <div class="sidebar"> 
+                <!-- Filters Section -->
+                <div class="filters-container">
+                    <h3>Filters</h3>
+                    <!-- Creation Date -->
+                    <div class="filter-group">
+                        <label>Creation Date: <span id="creation-date-val">{{.Stats.MinCreationDate}} - {{.Stats.MaxCreationDate}}</span></label>
+                        
+                        <div class="range-values">
+                            <input type="number" id="min-creation-input" 
+                                   min="{{.Stats.MinCreationDate}}" 
+                                   max="{{.Stats.MaxCreationDate}}"
+                                   value="{{.Stats.MinCreationDate}}">
+                            <span>-</span>
+                            <input type="number" id="max-creation-input" 
+                                   min="{{.Stats.MinCreationDate}}" 
+                                   max="{{.Stats.MaxCreationDate}}"
+                                   value="{{.Stats.MaxCreationDate}}">
+                        </div>
+                        <div class="range-slider">
+                            <input type="range" id="min-creation-date"
+                                min="{{.Stats.MinCreationDate}}"
+                                max="{{.Stats.MaxCreationDate}}"
+                                value="{{.Stats.MinCreationDate}}">
+                            <input type="range" id="max-creation-date"
+                                min="{{.Stats.MinCreationDate}}"
+                                max="{{.Stats.MaxCreationDate}}"
+                                value="{{.Stats.MaxCreationDate}}">
+                        </div>
+                    </div>
+                    <!-- First Album Year -->
+                    <div class="filter-group">
+                        <label>First Album Year: <span id="first-album-val">{{.Stats.MinFirstAlbumYear}} - {{.Stats.MaxFirstAlbumYear}}</span></label>
+                        <div class="range-values">
+                            <input type="number" id="min-album-input" 
+                                   min="{{.Stats.MinFirstAlbumYear}}" 
+                                   max="{{.Stats.MaxFirstAlbumYear}}"
+                                   value="{{.Stats.MinFirstAlbumYear}}">
+                            <span>-</span>
+                            <input type="number" id="max-album-input" 
+                                   min="{{.Stats.MinFirstAlbumYear}}" 
+                                   max="{{.Stats.MaxFirstAlbumYear}}"
+                                   value="{{.Stats.MaxFirstAlbumYear}}">
+                        </div>
+                        <div class="range-slider">
+                            <input type="range" id="min-album-year"
+                                min="{{.Stats.MinFirstAlbumYear}}"
+                                max="{{.Stats.MaxFirstAlbumYear}}"
+                                value="{{.Stats.MinFirstAlbumYear}}">
+                            <input type="range" id="max-album-year"
+                                min="{{.Stats.MinFirstAlbumYear}}"
+                                max="{{.Stats.MaxFirstAlbumYear}}"
+                                value="{{.Stats.MaxFirstAlbumYear}}">
+                        </div>
+                    </div>
 
-<button onclick="window.scrollTo(0,0)" id="scrollTopBtn" title="Go to top">▲</button>
+                    <div class="filter-group">
+                        <label>Number of Members</label>
+                        <div class="checkbox-group">
+                            {{range .Stats.MemberCounts}}
+                            <label><input type="checkbox" class="member-checkbox" value="{{.}}"> {{.}}</label>
+                            {{end}}
+                        </div>
+                    </div>
 
-<script>
-// show button when scrolling down
-window.onscroll = function() {
-var btn = document.getElementById("scrollTopBtn");
-if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-  btn.style.display = "block";
-} else {
-  btn.style.display = "none";
-}
-};
-</script>
+                    <div class="filter-group">
+                        <label>Location</label>
+                        <input type="text" id="location-search" placeholder="Type to filter locations..."
+                            list="locations-list">
+                        <datalist id="locations-list">
+                            {{range .Locations}}
+                            <option value="{{.}}">
+                                {{end}}
+                        </datalist>
+                    </div>
+                    <div class="filter-actions">
+                        <button id="reset-filters" class="reset-button">Reset Filters</button>
+                    </div>
+                </div>
+            </div>
+                <!-- Artist Grid Section -->
+                <div id="artist-list" class="artist-grid">
+                    {{range .Artists}}
+                    <div href="/artist/{{.ID}}" class="artist-card">
+                        <a href="/artist/{{.ID}}" class="artist-tag">
+                            <div class="card-image">
+                                <img src="{{.Image}}" alt="{{.Name}}">
+                            </div>
+
+                            <div class="card-content">
+                                <section class="band-info">
+                                    <h3>{{.Name}}</h3>
+                                </section>
+
+                                <section class="card-info">
+                                    <p><strong>Members:</strong>
+                                        {{ if eq (len .Members) 1 }}
+                                        Solo
+                                        {{ else }}
+                                        {{ len .Members }}
+                                        {{ end }}
+                                    </p>
+                                    <p><strong>Start Year:</strong> {{.CreationDate}}</p>
+                                    <p><strong>First Release:</strong> {{.FirstAlbum}}</p>
+                                    <a href="/artist/{{.ID}}" class="green-button">More Info →</a>
+                                </section>
+                            </div>
+                        </a>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+    </main>
+    <script src="/static/js/filters.js"></script>
+    <script src="/static/js/search_suggestions.js"></script>
+
+    <footer>
+        <p>&copy; 2026 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
+    </footer>
+
+    <button onclick="window.scrollTo(0,0)" id="scrollTopBtn" title="Go to top">▲</button>
+
+    <script>
+        // show button when scrolling down
+        window.onscroll = function() {
+            var btn = document.getElementById("scrollTopBtn");
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+    </script>
 </body>
+
 </html>
