@@ -4,7 +4,7 @@
     <meta charset="UTF-8"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Groupie Tracker: Home</title> 
-    <link rel="stylesheet" href="/static/css/style.css"> 
+    <link rel="stylesheet" href="static/css/style.css"> 
     <script>
   document.documentElement.classList.add("js-enabled");
 </script>
@@ -13,13 +13,13 @@
 
 <header>
     <nav>
-        <a href="/"><h1>GROUPIE TRACKER</h1></a>
+        <a href="./"><h1>GROUPIE TRACKER</h1></a>
     </nav>
 </header>
 
 <main class="artist-main">
     <div class="search-container">
-        <form action="/" method="GET" class="search-form">
+        <form action="./" method="GET" class="search-form">
             <input
                 type="text"
                 name="search"
@@ -48,7 +48,7 @@
             <ul>
                 {{range .SearchResults}}
                     <li>
-                        <a href="/artist/{{.ID}}">{{.Label}}</a>
+                        <a href="artist/{{.ID}}">{{.Label}}</a>
                 </li>
                 {{end}}
             </ul>
@@ -57,8 +57,8 @@
     </div>
     <div id="artist-list" class="artist-grid">
         {{range .Artists}}
-            <div href="/artist/{{.ID}}" class="artist-card">
-                <a href="/artist/{{.ID}}" class="artist-tag">
+            <div href="artist/{{.ID}}" class="artist-card">
+                <a href="artist/{{.ID}}" class="artist-tag">
                 <div class="card-image">
                     <img src="{{.Image}}" alt="{{.Name}}">
                 </div>
@@ -78,7 +78,7 @@
                         </p>
                         <p><strong>Start Year:</strong> {{.CreationDate}}</p>
                         <p><strong>First Release:</strong> {{.FirstAlbum}}</p>
-                        <a href="/artist/{{.ID}}" class="green-button">More Info →</a>
+                        <a href="artist/{{.ID}}" class="green-button">More Info →</a>
                     </section>
                 </div>
                 </a>
@@ -86,7 +86,7 @@
         {{end}}
     </div>
 </main>
-<script src="/static/js/search_suggestions.js"></script>
+<script src="static/js/search_suggestions.js"></script>
 
 <footer>
     <p>&copy; 2026 Groupie Tracker | cktistak, gkoutzos, ttsopani</p>
