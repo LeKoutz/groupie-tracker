@@ -34,14 +34,14 @@ A web application that displays information about your favorite artists and band
 - **Frontend**:
     - HTML/CSS
     - Javascript
-- **Deployment**: Railway
+- **Deployment**: Render
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://platform.zone01.gr/git/gkoutzos/groupie-tracker-filters.git
-cd groupie-tracker-filters
+git clone https://github.com/LeKoutz/groupie-tracker.git
+cd groupie-tracker
 ```
 
 2. Run the application:
@@ -53,7 +53,7 @@ go run main.go
 
 ## Deployed
 
-Check out the [live](https://groupie-tracker-production-e572.up.railway.app/) application
+Check out the [live](https://portfolio-kky4.onrender.com/groupie-tracker) application
 
 ## License
 
