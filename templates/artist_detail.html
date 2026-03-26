@@ -7,14 +7,14 @@
     <title>Groupie Tracker: {{ .Artist.Name }}</title>
     <base href="/groupie-tracker/">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"> <!-- needed for the map -->
-    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="/groupie-tracker/static/css/style.css">
 </head>
 
 <body>
 
     <header>
         <nav>
-            <a href="/">
+            <a href="/groupie-tracker/">
                 <h1>GROUPIE TRACKER</h1>
             </a>
         </nav>
@@ -24,7 +24,7 @@
 
         <section class="artist-wrapper">
 
-            <a href="/" class="back-button">← Back</a>
+            <a href="/groupie-tracker/" class="back-button">← Back</a>
 
             <div class="artist-layout">
 
@@ -116,7 +116,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- blank means don't share credentials with others -->
-    <script src="/static/js/artist_map.js"></script> <!-- loads the map -->
+    <script src="/groupie-tracker/static/js/artist_map.js"></script> <!-- loads the map -->
 </body>
 
 </html>
