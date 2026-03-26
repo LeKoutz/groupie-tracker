@@ -11,14 +11,14 @@ html {
 /* FONTS */
 @font-face {
     font-family: 'HeaderFont';
-    src: url('/static/fonts/Lovira.ttf') format('truetype');
+    src: url('/groupie-tracker/static/fonts/Lovira.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'QuestrialLocal';
-    src: url('/static/fonts/Questrial.ttf') format('truetype');
+    src: url('/groupie-tracker/static/fonts/Questrial.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
