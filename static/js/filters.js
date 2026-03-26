@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const memberCount = a.members?.length === 1 ? "Solo" : a.members?.length || 0;
     return `
       <div class="artist-card">
-        <a href="/artist/${a.id}" class="artist-tag">
+        <a href="artist/${a.id}" class="artist-tag">
           <div class="card-image">
             <img src="${a.image}" alt="${a.name}">
           </div>
@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <p><strong>Members:</strong> ${memberCount}</p>
               <p><strong>Start Year:</strong> ${a.creationDate}</p>
               <p><strong>First Release:</strong> ${a.firstAlbum}</p>
-              <a href="/artist/${a.id}" class="green-button">More Info →</a>
+              <a href="artist/${a.id}" class="green-button">More Info →</a>
             </section>
           </div>
         </a>
@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTimeout(debounce);
     debounce = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/filter?${buildParams()}`);
+        const res = await fetch(`/groupie-tracker/api/filter?${buildParams()}`);
         if (!res.ok) throw new Error("Network error");
         const artists = await res.json();
         grid.innerHTML = artists?.length 

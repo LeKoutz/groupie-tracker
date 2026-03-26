@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     debounceTimer = setTimeout(async () => {
-      const res = await fetch(`/api/search?search=${encodeURIComponent(query)}&category=${encodeURIComponent(categorySelect.value)}`);
+      const res = await fetch(`/groupie-tracker/api/search?search=${encodeURIComponent(query)}&category=${encodeURIComponent(categorySelect.value)}`);
       const results = await res.json();
 
       // If no results found show a message, otherwise show a dropdown list
@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <ul>
             ${results.map(r => `
               <li>
-                <a href="/artist/${r.ID}">${r.Label}</a>
+                <a href="artist/${r.ID}">${r.Label}</a>
               </li>
             `).join("")}
           </ul>
